@@ -11,11 +11,9 @@
     *******************SINTAXE_DE_ORGANIZAÇÃO_DE_CÓDIGO*********************
 
     1-As áreas são delimitadas por cabeçalhos do tipo: //###NOME_DA_AREA###//
-    2-O início e termino de uma função são delimitados por:
-    //----------// (exceto se no começo de uma área)
-    3-Antes de cada função ou metodo há um breve comentário sobre a funcio-
-    nalidade/ serventia de cada função.
-    4-Os nomes de variáveis compostas tem o caractere _ indicando um espaço.
+    2-Após o sketch de cada função há um comentário sobre sua utilidade.
+    3-Caso algum item necessite, haverá um comentário logo em seguida.
+    4-Os nomes de variáveis compostas tem o caractere '_' indicando um espaço.
     5-Variáveis auxialiares devem definidas no inicio de uma função para fa-
     cilitar a leitura;
     6-Utilizar nomes explicativos para variáves. Ex:int posicao_do_mario.
@@ -35,13 +33,13 @@
         jeto.
         4-SKETCHES DE FUNÇÕES:Onde estão apresentadas todas as funções cria-
         das com tipo de parametros.
-        5-MAIN:Onde está o main do programa.
-        6-FUNÇÕES:Onde estão as funções e metodos criadas para o jogo.
+        5-MAIN: Onde está o main do programa.
+        6-FUNÇÕES: Onde estão as funções/subrotinas criadas para o jogo.
 
 *******************************************************************************/
 
 /*0-REFERENCIAS
-Referência das cores da função textcolor()
+Referência das cores da função text_color()
 0 = Black -----------  8 = Gray
 1 = Blue ------------  9 = Light Blue
 2 = Green ----------- 10 = Light Green
@@ -63,7 +61,7 @@ Referência das cores da função textcolor()
 #include <time.h>
 
 //######################2-DEFINIÇÕES:############################//
-
+// definições de itens do jogo
 #define SCORE_INICIAL 1000  // Pontuação Inicial
 #define VIDAS_INICIAIS 3    // Número de vidas inicial
 #define Y_MAX 62       // Y máximo do prompt
@@ -72,8 +70,7 @@ Referência das cores da função textcolor()
 #define Y_PDR 2        // Tamanho Y padrão para impressão
 #define MAX_OBJ 460    // Numero máximo de objetos possíveis
 #define MAX_BARRIL 15  // Número máximo de barris móveis simultaneamente na tela
-
-// cores da função textcolor()
+// cores da função text_color()
 #define BLACK 0
 #define BLUE 1
 #define GREEN 2
@@ -116,7 +113,7 @@ codigo
 #endif // DEBUG
 */
 //######################3-STRUCTS############################//
-    //Define estrutura central do programa.
+
 typedef struct tipo_fase{
     char tipo;
     int linha_inicial;
@@ -136,6 +133,15 @@ typedef struct PARAMETROS{
     CONTROLE *princesa;
     CONTROLE *donkey;
     CONTROLE *barrilm;
+    /*
+    CONTROLE *barrile;
+    CONTROLE *superficie;
+    CONTROLE *escada_topo;
+    CONTROLE *escada_meio;
+    CONTROLE *escada_quebrada;
+    CONTROLE *rampa_direita;
+    CONTROLE *rampa_esquerda;
+    */
     int score_atual;
     int score_max;
     int vidas;
@@ -144,12 +150,12 @@ typedef struct PARAMETROS{
 //#######################4-SKETCHES DE FUNÇÕES############################//
 
 void hide_cursor();                 // Esconde o cursor do prompt OK
-int mainMenu();                     // Menu principal, retorna a opção selecionada pelo jogador
+int main_menu();                     // Menu principal, retorna a opção selecionada pelo jogador
 int setas();                        // Utilização das setas direcionais do teclado OK
 void gotoxy(int,int);               // Move o cursor do prompt para uma certa posição OK
-void textcolor(int);                // Muda a cor do texto do prompt de acordo com o código de cores OK
+void text_color(int);                // Muda a cor do texto do prompt de acordo com o código de cores OK
 int ler_mapa(TIPO_FASE[]);          // Lê um arquivo fase.bin OK
-void formatprompt();                // Formata o prompt: Define dimensões e linguagem padrão OK
+void format_prompt();                // Formata o prompt: Define dimensões e linguagem padrão OK
 void imprime_fase(PARAMETROS*,int); // Imprime o mapa OK
 int move_mario(PARAMETROS*);        // Move o mário A FAZER
 void apaga_mario(PARAMETROS*);      // Apaga a posição do márioOK
@@ -176,7 +182,7 @@ int controle_menu(PARAMETROS*);     // Controla a opção selecionada pelo jogador
 //void salva_jogo();
 //void carrega_jogo();
 //void pausa_jogo();
-
+//void joga_barril();
 
 //######################5-MAIN############################//
 
@@ -199,7 +205,7 @@ int controle_menu(PARAMETROS *parametros){
     int indfor;
     for (indfor=0;indfor<MAX_OBJ;indfor++)
         parametros->vetor_objetos[indfor].tipo='Z';
-    controle=mainMenu();
+    controle=main_menu();
     switch(controle)
     {
     case NOVOJOGO:
@@ -245,7 +251,7 @@ void hide_cursor(){
     SetConsoleCursorInfo(consoleHandle, &info);
 }
 
- void formatprompt(){
+ void format_prompt(){
     setlocale(LC_ALL, "Portuguese"); // Língua para português  //prompt em português para acentos e afins
     system("title Donkey Kong"); // Muda nome do prompt
     system("color 03");                             // Cor normal do prompt
@@ -257,7 +263,7 @@ void hide_cursor(){
     hide_cursor();
 }
 
-void textcolor(int ForgC){
+void text_color(int ForgC){
     WORD wColor;
     HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -290,12 +296,12 @@ int setas(){
     return valor_seta; // Manda para o main a seta lida
 }
 
-int mainMenu(){
-    formatprompt();  // seta tamanho e lingua
+int main_menu(){
+    format_prompt();  // seta tamanho e lingua
     int x =24 , y[] = {27, 31, 35, 39};
     int contador = 0, sair = FALSE; // Coordenadas da seta, contador índice da seta, booleano sair para sair do menu
     system("cls"); // Limpa a tela
-    textcolor(12); // Cor vermelha
+    text_color(12); // Cor vermelha
     imprime_tela_incial();
 
     do // Faz ao menos uma vez
@@ -412,7 +418,7 @@ void jogo(PARAMETROS *parametros){
 
 void vitoria(PARAMETROS *parametros){
     system("cls");
-    textcolor(LIGHT_AQUA);
+    text_color(LIGHT_AQUA);
     int c;
     FILE *vitoria;
     vitoria = fopen("vitoria.txt", "r");
@@ -434,7 +440,7 @@ void vitoria(PARAMETROS *parametros){
 
 void derrota(PARAMETROS *parametros){
     system("cls");
-    textcolor(BRIGHT_WHITE);
+    text_color(BRIGHT_WHITE);
     int c;
     FILE *derrota;
     derrota = fopen("derrota.txt", "r");
@@ -457,7 +463,7 @@ void derrota(PARAMETROS *parametros){
 void imprime_instrucoes(){
     system("cls");
     Beep(500, 40);
-    textcolor(LIGHT_GREEN);
+    text_color(LIGHT_GREEN);
     int c;
     FILE *info;
     info = fopen("menuinfo.txt", "r");
@@ -478,7 +484,7 @@ void imprime_instrucoes(){
 
 void imprime_tela_incial(){
     system("cls");
-    textcolor(LIGHT_RED);
+    text_color(LIGHT_RED);
     int c;
     FILE *menu;
     menu = fopen("menu.txt", "r");
@@ -491,7 +497,7 @@ void imprime_tela_incial(){
 
 int move_mario(PARAMETROS *parametros){
 
-    textcolor(LIGHT_RED);
+    text_color(LIGHT_RED);
     char key;
     while(key!=ESC && key!= 'P'){  // Se uma dessas teclas for pressionada
     Sleep(DELAY); // Delay
@@ -668,7 +674,7 @@ void imprime_rampaesq(TIPO_FASE resquerda){
 }
 void imprime_fase(PARAMETROS *parametros, int qtd_objetos){ // CHECAR ESSA CONVERSAO
     int i, j=0;
-    textcolor(AQUA);
+    text_color(AQUA);
     for (i=0;i<qtd_objetos;i++)
     {
         switch(parametros->vetor_objetos[i].tipo)
@@ -718,6 +724,13 @@ void imprime_fase(PARAMETROS *parametros, int qtd_objetos){ // CHECAR ESSA CONVE
 
 
 /* ############ CHANGELOG ############
+    ############ Legenda: ###########
+
+         '-' : Mudança
+        '->' : Subtópico da mudança
+    '####=>' : Importante ler
+    ########### ######### ###########
+
 Pedro, 18/06:
     - Criação da função controle_menu(); para poder iniciar jogos novamente caso o usuário ganhe ou perda(Ver funções abaixo)
     - Criação da função novo_jogo();
@@ -750,7 +763,7 @@ Pedro, 19/06:
               -> Vetor superficie, vetor escada normal, vetor escada quebrada, vetor fim escada, vetor rampad, vetor rampae para controlar o movimento e usar a função acima
               -> OBS.: Declarar esses vetores como ponteiros e alocar memória para eles
               -> OBS2.: Vai precisar de um define de MAX para cada um dos vetores
-            - Será que é mesmo necessário usar matrizes nessas funções de impressão inicial?
+           ###=> Será que é mesmo necessário usar matrizes nessas funções de impressão inicial?
             - Colocar cor diferente nas impressões (dentro de cada função imprimeX() colocar uma cor)
 
 */
