@@ -25,7 +25,7 @@
 
     Este arquivo está dividido de forma a agrupar em áreas, por similaridade,
     os trechos de código. São as áreas:
-        0-REFERENCIAS: Onde estão alguns dados  úteis para a aelaboração do
+        0-REFERENCIAS: Onde estão alguns dados  úteis para a elaboração do
         código.
         1-BIBILIOTECAS: Onde estão listadas as bibliotecas utilizadas no de-
         senvolvimento do programa.
@@ -37,8 +37,6 @@
         das com tipo de parametros.
         5-MAIN:Onde está o main do programa.
         6-FUNÇÕES:Onde estão as funções e metodos criadas para o jogo.
-        7-AREA DE DESENVOLVIMENTO: Onde estão algumas rotinas teste, funções de
-        debug e etc.
 
 *******************************************************************************/
 
@@ -52,9 +50,8 @@ Referência das cores da função textcolor()
 5 = Purple ---------- 13 = Light Purple
 6 = Yellow ---------- 14 = Light Yellow
 7 = White ----------- 15 = Bright White
-
-
 */
+
 //######################1-BIBILIOTECAS############################//
 
 #include <stdio.h>
@@ -67,12 +64,32 @@ Referência das cores da função textcolor()
 
 //######################2-DEFINIÇÕES:############################//
 
-#define SCOREINC 1000  // Pontuação Inicial
-#define VIDAS 3        // Número de vidas inicial
-#define NUMMAXOBJ 460  // Tamanho máximo de objetos possíveis
-#define Y_MAX 62       // Y max do prompt e x max do prompt
-#define X_MAX 46
-#define MAX_BARRIL 15
+#define SCORE_INICIAL 1000  // Pontuação Inicial
+#define VIDAS_INICIAIS 3    // Número de vidas inicial
+#define Y_MAX 62       // Y máximo do prompt
+#define X_MAX 46       // X máximo do prompt
+#define X_PDR 3        // Tamanho X padrão para impressão
+#define Y_PDR 2        // Tamanho Y padrão para impressão
+#define MAX_OBJ 460    // Numero máximo de objetos possíveis
+#define MAX_BARRIL 15  // Número máximo de barris móveis simultaneamente na tela
+
+// cores da função textcolor()
+#define BLACK 0
+#define BLUE 1
+#define GREEN 2
+#define AQUA 3
+#define RED 4
+#define PURPLE 5
+#define YELLOW 6
+#define WHITE 7
+#define GRAY 8
+#define LIGHT_BLUE 9
+#define LIGHT_GREEN 10
+#define LIGHT_AQUA 11
+#define LIGHT_RED 12
+#define LIGHT_PURPLE 13
+#define LIGHT_YELLOW 14
+#define BRIGHT_WHITE 15
 // códigos internos
 #define ERRO -1
 #define NOVOJOGO 0
@@ -80,6 +97,7 @@ Referência das cores da função textcolor()
 #define SAIR 2
 #define DERROTA 3
 #define VITORIA 4
+#define PAUSE 5
  // código  das teclas
 #define SPACEBAR 32
 #define CIMA 72
@@ -88,124 +106,110 @@ Referência das cores da função textcolor()
 #define ESQUERDA 75
 #define ESC 27
 #define ENTER 13
+// testes
+#define DELAY 100 // Tempo padrão de delay
 
-// definições de coisas a desenvolver  e testes
-#define XPDR 3
-#define YPDR 2
-#define GRAVIDADE 0.5 // numero de posições por time stamp
-#define JUMPPOWER 3  //  velocidade/ impulso do pulo
-#define TEMPO 100 //
-
-//#define DEBUG  // tipo de definição muito útil que descobri
-/* tudo que eu escrever  dentro de uma estrutura como
+// #define DEBUG  //
+/*
 #ifdef DEBUG
-código vai aqui
+codigo
 #endif // DEBUG
-só roda enquanto esse cara estiver definido. Assim se comentar essa def aqui em cima
-nenhum deles roda e não temos que tirar do código nem nada. Dai fica muito útil para testes
 */
 //######################3-STRUCTS############################//
     //Define estrutura central do programa.
-typedef struct tipo_fase
-{
+typedef struct tipo_fase{
     char tipo;
-    int  coluna_inicial, linha_inicial;   // invertido
+    int linha_inicial;
+    int coluna_inicial;
     float velocidade;
 } TIPO_FASE;
-//#######################STRUCT EM TESTE############################//
+
 typedef struct CONTROLE{
-    char tipo;
     int x;
     int y;
-    int score_atual;
-    int score_max;
-    int vidas;
 }CONTROLE;
 
 typedef struct PARAMETROS{
-    CONTROLE mario;
-    CONTROLE princesa;
-    CONTROLE donkey;
-    CONTROLE barrilm[MAX_BARRIL];
-    //int score_atual;
-    //int score_max;
-    //int vidas;
+    TIPO_FASE *vetor_objetos;
+    TIPO_FASE *inc_mario;
+    CONTROLE *mario;
+    CONTROLE *princesa;
+    CONTROLE *donkey;
+    CONTROLE *barrilm;
+    int score_atual;
+    int score_max;
+    int vidas;
 }PARAMETROS;
+
 //#######################4-SKETCHES DE FUNÇÕES############################//
 
-
-void hide_cursor(); // ensconde cursor, OK
-int mainMenu(); // menu , OK
-int setas(); // setas OK
-void gotoxy(int,int); // mudar posicação do cursor , OK
-void textcolor(int);  // cor linda, OK
-int lermapa(TIPO_FASE[]);  //ok
-void formatprompt(); // já esta OK
-
-//         EM TESTE ou a fazer
-
-/*Boas mano, tu  vai ver que tem muita coisa meio repetida nas funções de imprimir, se conseguir tenta optimizar isso
-acredito tambem que devemos fazer duas gotoxy uma para coisas tipo texto setas e etc e outra para os objetos
-qualquer dúvida me pede. tentei deixar o negóio de impressão pronto agr a jogabilidade é contigo heheh, pq essa semana
- vai ficar meio foda pra mim fazer algo */
-
-void imprime_fase(TIPO_FASE[],int, CONTROLE*, CONTROLE*, CONTROLE*, CONTROLE[]); //ok
-void move_mario(CONTROLE*); //a fazer
-void imprime_tela_incial(); // ok
-void imprime_instrucoes(); //ok
-void imprime_mario(TIPO_FASE);// para imprimir o mário, mais ou menos
-void imprime_donk1(TIPO_FASE); // para imprimir o donk1, mais ou menos
-void imprime_donk2(TIPO_FASE); // para imprimir o donk 2, mais ou menos
-void imprime_barrilm(TIPO_FASE); //para imprimir  mais ou menos
-void imprime_barrile(TIPO_FASE);// para imprimir  mais ou menos
-void imprime_princesa(TIPO_FASE);//para imprimir  mais ou menos
-void imprime_escOK(TIPO_FASE);//mais ou menos
-void imprime_escQ(TIPO_FASE);//  mais ou menos
-void imprime_escFIM(TIPO_FASE);// mais ou menos
-void imprime_rampadir(TIPO_FASE); // a fazer
-void imprime_rampaesq(TIPO_FASE); // a fazer
-void imprime_superficie(TIPO_FASE); // mais ou menos
-void novo_jogo(TIPO_FASE*, CONTROLE*, CONTROLE*, CONTROLE*, CONTROLE[]);
-void jogo(TIPO_FASE*, CONTROLE*, CONTROLE*, CONTROLE*, CONTROLE[]);
-void vitoria(TIPO_FASE*, CONTROLE*, CONTROLE*, CONTROLE*, CONTROLE[]);
-void derrota(TIPO_FASE*, CONTROLE*, CONTROLE*, CONTROLE*, CONTROLE[]);
-int controle_menu(TIPO_FASE*, CONTROLE*, CONTROLE*, CONTROLE*, CONTROLE[]);
+void hide_cursor();                 // Esconde o cursor do prompt OK
+int mainMenu();                     // Menu principal, retorna a opção selecionada pelo jogador
+int setas();                        // Utilização das setas direcionais do teclado OK
+void gotoxy(int,int);               // Move o cursor do prompt para uma certa posição OK
+void textcolor(int);                // Muda a cor do texto do prompt de acordo com o código de cores OK
+int ler_mapa(TIPO_FASE[]);          // Lê um arquivo fase.bin OK
+void formatprompt();                // Formata o prompt: Define dimensões e linguagem padrão OK
+void imprime_fase(PARAMETROS*,int); // Imprime o mapa OK
+int move_mario(PARAMETROS*);        // Move o mário A FAZER
+void apaga_mario(PARAMETROS*);      // Apaga a posição do márioOK
+void posiciona_mario(PARAMETROS*);  // Imprime o mário OK
+void imprime_tela_incial();         // Imprime a tela inicial (menu principal) OK
+void imprime_instrucoes();          // Imprime a tela de instruções OK
+void imprime_mario(TIPO_FASE);      // MAIS OU MENOS
+void imprime_donk1(TIPO_FASE);      // MAIS OU MENOS
+void imprime_donk2(TIPO_FASE);      // MAIS OU MENOS
+void imprime_barrilm(TIPO_FASE);    // MAIS OU MENOS
+void imprime_barrile(TIPO_FASE);    // MAIS OU MENOS
+void imprime_princesa(TIPO_FASE);   // MAIS OU MENOS
+void imprime_escOK(TIPO_FASE);      // MAIS OU MENOS
+void imprime_escQ(TIPO_FASE);       // MAIS OU MENOS
+void imprime_escFIM(TIPO_FASE);     // MAIS OU MENOS
+void imprime_rampadir(TIPO_FASE);   // MAIS OU MENOS
+void imprime_rampaesq(TIPO_FASE);   // MAIS OU MENOS
+void imprime_superficie(TIPO_FASE); // MAIS OU MENOS
+void novo_jogo(PARAMETROS*);        // Começa um jogo totalmente novo OK
+void jogo(PARAMETROS*);             // Roda o jogo QUASE OK
+void vitoria(PARAMETROS*);          // Imprime uma tela de vitória OK
+void derrota(PARAMETROS*);          // Imprime uma tela de derrota OK
+int controle_menu(PARAMETROS*);     // Controla a opção selecionada pelo jogador OK
 //void salva_jogo();
 //void carrega_jogo();
-//void carrega_mapa;
+//void pausa_jogo();
 
 
 //######################5-MAIN############################//
 
-int main()
-{
-    TIPO_FASE *vetorobjetos = malloc(sizeof(TIPO_FASE) * NUMMAXOBJ);  // inicialização do vetor de controle, aloca NUMMAXOBJ espaços para TIPO_FASE, é igual a um vetor, mas declarado como ponteiro
-    CONTROLE *mario = malloc(sizeof(CONTROLE));
-    CONTROLE *princesa = malloc(sizeof(CONTROLE));
-    CONTROLE *donkey = malloc(sizeof(CONTROLE));
-    CONTROLE barrilm[MAX_BARRIL];
-    controle_menu(vetorobjetos, mario, princesa, donkey, barrilm); // Função que controla as opções do menu principal
+int main(){
+    PARAMETROS *parametros = malloc(sizeof(PARAMETROS)); // Variável ponteiro utilizada para tudo, junto da alocação de espaço como declaração do ponteiro
+    parametros->mario = malloc(sizeof(CONTROLE));
+    parametros->princesa = malloc(sizeof(CONTROLE));
+    parametros->donkey = malloc(sizeof(CONTROLE));
+    parametros->barrilm = malloc(sizeof(CONTROLE)* MAX_BARRIL);
+    parametros->inc_mario = malloc(sizeof(TIPO_FASE));
+    parametros->vetor_objetos = malloc(sizeof(TIPO_FASE)* MAX_OBJ);
+    controle_menu(parametros); // Função que controla as opções do menu principal
+
     return 0;
 }
-//######################6-FUNÇÕES OK############################//
+//######################6-FUNÇÕES############################//
 
-int controle_menu(TIPO_FASE *vetorobjetos, CONTROLE *mario, CONTROLE *princesa, CONTROLE *donkey, CONTROLE barrilm[])
-{
-    int controle; //inicialização de variaveis de controle,score e indice do for de inicialização
+int controle_menu(PARAMETROS *parametros){
+    int controle;
     int indfor;
-    for (indfor=0;indfor<NUMMAXOBJ;indfor++)// inicia vetor
-        vetorobjetos[indfor].tipo='Z';
+    for (indfor=0;indfor<MAX_OBJ;indfor++)
+        parametros->vetor_objetos[indfor].tipo='Z';
     controle=mainMenu();
     switch(controle)
     {
     case NOVOJOGO:
-         novo_jogo(vetorobjetos, mario, princesa, donkey, barrilm); // SE QUISER TESTAR AS FUNCOES, VOU TIRAR DEPOIS: vitoria(vetorobjetos, mario); // derrota(vetorobjetos, mario);
-         //jogo(vetorobjetos, mario);
+         novo_jogo(parametros);
+         jogo(parametros);
          break;
     case CONTINUARJOGO:
          printf("A continuar");
          // A FAZER...carrega_jogo();
-         // jogo(vetorobjetos, mario);
+         // jogo();
          break;
     case SAIR:
          return 0;
@@ -213,8 +217,7 @@ int controle_menu(TIPO_FASE *vetorobjetos, CONTROLE *mario, CONTROLE *princesa, 
     }
 }
 
-int lermapa(TIPO_FASE arrayobj[])
-{
+int ler_mapa(TIPO_FASE vetor_objetos[]){
     TIPO_FASE buffer;
     FILE *fase;
     int contador=0;
@@ -226,7 +229,7 @@ int lermapa(TIPO_FASE arrayobj[])
     else {
      while(!feof(fase)){
         fread(&buffer,sizeof(TIPO_FASE),1,fase);
-            arrayobj[contador]=buffer;  // aqui de fato é feito o armazenamento de dados
+            vetor_objetos[contador]=buffer;  // aqui de fato é feito o armazenamento de dados
             contador++;
             }
     }
@@ -234,10 +237,7 @@ int lermapa(TIPO_FASE arrayobj[])
     return contador;
 }
 
-//-------------------------------------------------------------//
-
-void hide_cursor() // Esconde o cursor default do prompt
-{
+void hide_cursor(){
     HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE); // Esconde o Cursor do console
     CONSOLE_CURSOR_INFO info;
     info.dwSize = 100;
@@ -245,10 +245,7 @@ void hide_cursor() // Esconde o cursor default do prompt
     SetConsoleCursorInfo(consoleHandle, &info);
 }
 
-//-------------------------------------------------------------//
-
- void formatprompt() // Formatação do prompt
-{
+ void formatprompt(){
     setlocale(LC_ALL, "Portuguese"); // Língua para português  //prompt em português para acentos e afins
     system("title Donkey Kong"); // Muda nome do prompt
     system("color 03");                             // Cor normal do prompt
@@ -260,10 +257,7 @@ void hide_cursor() // Esconde o cursor default do prompt
     hide_cursor();
 }
 
-//-------------------------------------------------------------//
-
-void textcolor(int ForgC) // Função para colorir o texto
-{
+void textcolor(int ForgC){
     WORD wColor;
     HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -274,21 +268,14 @@ void textcolor(int ForgC) // Função para colorir o texto
     }
 }
 
-
-//-------------------------------------------------------------//
-
-void gotoxy (int x, int y)
-{
+void gotoxy (int x, int y){
  COORD coord = {0, 0};
  coord.X =x; coord.Y = y+2; // X and Y coordinates
  SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 }
 
-//-------------------------------------------------------------//
-
-int setas()  // Controle pelas setas direcionais
-{
-    int valor_seta; // Pode ser os valores definidos no cabeçalho
+int setas(){
+    int valor_seta; // Pode ser apenas os valores definidos no cabeçalho
 
     do
         valor_seta = getch(); // Continua pegando caracteres
@@ -303,12 +290,9 @@ int setas()  // Controle pelas setas direcionais
     return valor_seta; // Manda para o main a seta lida
 }
 
-//-------------------------------------------------------------//
-
-int mainMenu() // Menu principal do jogo
-{
+int mainMenu(){
     formatprompt();  // seta tamanho e lingua
-    int x =24 , y[] = {27, 31, 35,39};
+    int x =24 , y[] = {27, 31, 35, 39};
     int contador = 0, sair = FALSE; // Coordenadas da seta, contador índice da seta, booleano sair para sair do menu
     system("cls"); // Limpa a tela
     textcolor(12); // Cor vermelha
@@ -372,115 +356,111 @@ int mainMenu() // Menu principal do jogo
     return contador;
 }
 
-//######################7-AREA DE DESENVOLVIMENTO############################//
+void apaga_mario(PARAMETROS *parametros){
+    gotoxy(parametros->mario->y, parametros->mario->x);
+    printf("   ");
+    gotoxy(parametros->mario->y, parametros->mario->x+1);
+    printf("   ");
+}
 
-void novo_jogo(TIPO_FASE *vetorobjetos, CONTROLE *parametros, CONTROLE *princesa, CONTROLE *donkey, CONTROLE barrilm[])
-{
+void posiciona_mario(PARAMETROS *parametros){
+    gotoxy(parametros->mario->y,parametros->mario->x);
+    printf("\\ô/");
+    gotoxy(parametros->mario->y, (parametros->mario->x)+1);
+    printf("/H\\");
+    hide_cursor();
+}
+
+void novo_jogo(PARAMETROS *parametros){
     int num_objetos;
     system("cls");
-    parametros->score_atual=SCOREINC;
-    parametros->score_max=SCOREINC;
-    parametros->vidas=VIDAS;
-    num_objetos=lermapa(vetorobjetos);
+    parametros->score_atual=SCORE_INICIAL;
+    parametros->score_max=SCORE_INICIAL;
+    parametros->vidas=VIDAS_INICIAIS;
+    num_objetos=ler_mapa(parametros->vetor_objetos);
     if(num_objetos==ERRO)
         printf("Erro na leitura do arquivo, reinicie o programa");
     else
-    {
-        imprime_fase(vetorobjetos,num_objetos,parametros, princesa, donkey, barrilm);
-        gotoxy(0,-2);
-        printf("VIDAS %d \n",parametros->vidas);
-        printf("SCORE ATUAL/MAX: %d / %d",parametros->score_atual, parametros->score_max);
-        system("pause");
-    }
+        imprime_fase(parametros,num_objetos);
 }
 
-//-------------------------------------------------------------------------//
-void jogo(TIPO_FASE *vetorobjetos, CONTROLE *mario, CONTROLE *princesa, CONTROLE *donkey, CONTROLE barrilm[]) // ver como fazer pra descobrir a posição do donk, barril e princesa
-{
+void jogo(PARAMETROS *parametros){
 
     int condition = 0;
-    while(condition != DERROTA && condition != VITORIA)
+    while(condition != PAUSE && condition != VITORIA)
     {
-        move_mario(mario);
-//        if((mario->x == /*X_DONK*/ && mario->y == /*Y_DONK*/) ||
-//           (mario->x == /*X_BARRILMOVEL*/ && mario->y == /*Y_BARRILMOVEL*/)) // Se for igual ao X && Y de um || igual ao X && Y de outro (acho que tem que considerar a matriz toda e tal)
-/*        {
-            condition = DERROTA;
-            if(mario->vidas == 0)
-                derrota(vetorobjetos, mario, princesa, donkey, barrilm);
-            else
-                mario->vidas--;
-        }*/
-//        else if(mario->x == /*X_PRINCESA*/ && mario->y == /*Y_PRINCESA*/)
-/*                 {
-                    condition = VITORIA;
-                    vitoria(vetorobjetos, mario);
-                 }*/
-
-
+        condition = move_mario(parametros);
+        switch(condition)
+        {
+            case DERROTA: if(parametros->vidas == 0)
+                            derrota(parametros);
+                          else
+                          {
+                            (parametros->vidas)--;
+                            apaga_mario(parametros);
+                            imprime_fase(parametros, MAX_OBJ);
+                          }
+                          break;
+            case VITORIA: vitoria(parametros);
+                          break;
+            case PAUSE: //salvar jogo();
+                          controle_menu(parametros);
+                          break;
+        }
     }
-
 }
-//-------------------------------------------------------------------------//
 
-void vitoria(TIPO_FASE *vetorobjetos, CONTROLE *mario, CONTROLE *princesa, CONTROLE *donkey, CONTROLE barrilm[]) // Basicamente cópia da função imprime_tela_inicial();
-{
+void vitoria(PARAMETROS *parametros){
     system("cls");
-    textcolor(11);
+    textcolor(LIGHT_AQUA);
     int c;
     FILE *vitoria;
-    vitoria = fopen("vitoria.txt", "r"); // CRIAR TXT DE VITORIA
+    vitoria = fopen("vitoria.txt", "r");
     if (vitoria) {
         while ((c = getc(vitoria)) != EOF)
             putchar(c);
         fclose(vitoria);
     }
-    gotoxy(5, 15); // Achar posição boa
-    printf("Pontuação final: %d / Pontuação máxima: %d", mario->score_atual, mario->score_max);
+    gotoxy(5, 15);
+    printf("Pontuação final: %d / Pontuação máxima: %d", parametros->score_atual, parametros->score_max);
     gotoxy(7, 17);
     printf("Pressione ESC para retornar ao menu. . .");
     if(getch()==ESC)
     {
-        controle_menu(vetorobjetos, mario, princesa, donkey, barrilm); // Retorna à rotina de controle do menu
+        controle_menu(parametros); // Retorna à rotina de controle do menu
         Beep(500, 40);
     }
 }
 
-//-------------------------------------------------------------------------//
-
-void derrota(TIPO_FASE *vetorobjetos, CONTROLE *mario, CONTROLE *princesa, CONTROLE *donkey, CONTROLE barrilm[]) // Basicamente igual à vitoria
-{
+void derrota(PARAMETROS *parametros){
     system("cls");
-    textcolor(15);
+    textcolor(BRIGHT_WHITE);
     int c;
     FILE *derrota;
-    derrota = fopen("derrota.txt", "r"); // CRIAR TXT DE DERROTA
+    derrota = fopen("derrota.txt", "r");
     if (derrota) {
         while ((c = getc(derrota)) != EOF)
             putchar(c);
         fclose(derrota);
     }
-    gotoxy(5, 15); // Achar posição boa
-    printf("Pontuação final: %d / Pontuação máxima: %d", mario->score_atual, mario->score_max);
+    gotoxy(5, 15);
+    printf("Pontuação final: %d / Pontuação máxima: %d", parametros->score_atual, parametros->score_max);
     gotoxy(7, 17);
     printf("Pressione ESC para retornar ao menu. . .");
     if(getch()==ESC)
     {
-        controle_menu(vetorobjetos, mario, princesa, donkey, barrilm);
+        controle_menu(parametros);
         Beep(500, 40);
     }
 }
 
-//-------------------------------------------------------------------------//
-
 void imprime_instrucoes(){
     system("cls");
     Beep(500, 40);
-    textcolor(10);
+    textcolor(LIGHT_GREEN);
     int c;
     FILE *info;
-    info = fopen("menuinfo.txt", "r"); // agora se quiser trocar o menu é só trocar aqui dai o código fica menos poluído.
-                                    // além disso agr é so tu escrever num txt normal sem ter que por aspas ou \n ou \\ para imprimir barras :)
+    info = fopen("menuinfo.txt", "r");
     if (info) {
         while ((c = getc(info)) != EOF)
             putchar(c);
@@ -488,6 +468,7 @@ void imprime_instrucoes(){
     getch();
     }
     else {
+        system("cls");
         printf("Erro ao apresentar as intruções, verifique a existencia do arquivo menuinfo.txt");
         printf("\nPressione qualquer tecla para retornar ao menu");
         getch();
@@ -495,15 +476,12 @@ void imprime_instrucoes(){
     imprime_tela_incial();
 }
 
-//-------------------------------------------------------------------------//
-
 void imprime_tela_incial(){
     system("cls");
-    textcolor(12);
+    textcolor(LIGHT_RED);
     int c;
     FILE *menu;
-    menu = fopen("menu.txt", "r"); // agora se quiser trocar o menu é só trocar aqui dai o código fica menos poluído.
-                                    // além disso agr é so tu escrever num txt normal sem ter que por aspas ou \n ou \\ para imprimir barras :)
+    menu = fopen("menu.txt", "r");
     if (menu) {
         while ((c = getc(menu)) != EOF)
             putchar(c);
@@ -511,119 +489,55 @@ void imprime_tela_incial(){
     }
 }
 
-//-------------------------------------------------------------------------//
+int move_mario(PARAMETROS *parametros){
 
-void move_mario(CONTROLE *mario){
-
-   char key;
-   int jumptime;
-   float flagjump=0;
-   int ciclos=-1;
-   while(key!=ESC && key!= 'P'){  // Se uma dessas teclas for pressionada
-   Sleep(TEMPO); // Delay
-   if (kbhit()){
-   key = toupper(getch());
-    switch(key)
+    textcolor(LIGHT_RED);
+    char key;
+    while(key!=ESC && key!= 'P'){  // Se uma dessas teclas for pressionada
+    Sleep(DELAY); // Delay
+    if (kbhit())
     {
-    case 'A':// porumif aqui
-              gotoxy(mario->x, mario->y);
-              printf("   ");
-              gotoxy(mario->x,(mario->y)+1);
-              printf("   ");
-              (mario->x)--;
-              gotoxy(mario->x,mario->y);
-              printf("_Ô_");
-              gotoxy(mario->x,(mario->y)+1);
-              printf("/H\\");
-              hide_cursor();
-              break;
+        key = toupper(getch());
+        switch(key)
+        {
+        case 'A': apaga_mario(parametros);
+                  (parametros->mario->y)--;
+                  posiciona_mario(parametros);
+                  break;
 
-    case 'D':// ifaqui
-              gotoxy(mario->x, mario->y);
-              printf("   ");
-              gotoxy(mario->x,(mario->y)+1);
-              printf("   ");
-              (mario->x)++;
-              gotoxy(mario->x,mario->y);
-              printf("_Ô_");
-              gotoxy(mario->x,(mario->y)+1);
-              printf("/H\\");
-              hide_cursor();
-              break;
+        case 'D': apaga_mario(parametros);
+                  (parametros->mario->y)++;
+                  posiciona_mario(parametros);
+                  break;
 
-    case 'W': //if
-              gotoxy(mario->x, mario->y);
-              printf("   ");
-              gotoxy(mario->x,(mario->y)+1);
-              printf("   ");
-              (mario->y)--;
-              gotoxy(mario->x,mario->y);
-              printf("_Ô_");
-              gotoxy(mario->x,(mario->y)+1);
-              printf("/H\\");
-              hide_cursor();
-              break;
+        case 'W': apaga_mario(parametros);
+                  (parametros->mario->x)--;
+                  posiciona_mario(parametros);
+                  break;
 
-    case 'S': gotoxy(mario->x, mario->y);
-              printf("   ");
-              gotoxy(mario->x,(mario->y)+1);
-              printf("   ");
-              (mario->y)++;
-              gotoxy(mario->x,mario->y);
-              printf("_Ô_");
-              gotoxy(mario->x,(mario->y)+1);
-              printf("/H\\");
-              hide_cursor();
-              break;
+        case 'S': apaga_mario(parametros);
+                  (parametros->mario->x)++;
+                  posiciona_mario(parametros);
+                  break;
 
-   /* case SPACEBAR :
-                if(flagjump==0){
-                flagjump=1;
-                gotoxy(x, y);
-                printf("   ");
-                gotoxy(x,y+1);
-                printf("   ");
-                y--;
-                gotoxy(x,y);
-                printf("_?_");
-                gotoxy(x,y+1);
-                printf("/H\\");
-                hide_cursor();
-            }
-            break;*/
-
-    case ESC: gotoxy(10, 65);
-        break;
-    }
-
-   }
-
-  /*  if (flagjump>0){
-        ciclos++;
-        flagjump=JUMPPOWER-ciclos*GRAVIDADE;
-        if (flagjump==0){
-            ciclos=0;
-            gotoxy(x, y);
-            printf("   ");
-            gotoxy(x,y+1);
-            printf("   ");
-            y++;
-            gotoxy(x,y);
-            printf("_?_");
-            gotoxy(x,y+1);
-            printf("/H\\");
-            hide_cursor();
+// case SPACEBAR:
         }
-    }*/
+
    }
+
+    if(parametros->mario->x == parametros->donkey->x && parametros->mario->y == (parametros->donkey->y)+2)
+        return DERROTA;
+    else if(parametros->mario->x == (parametros->princesa->x) && parametros->mario->y == (parametros->princesa->y)-2)
+        return VITORIA;
+         //else if(coisa do barril)
+   }
+   return PAUSE;
 }
 
-//-------------------------------------------------------------//
-
-void imprime_mario(TIPO_FASE mario){  // observação, não sei se não é melhor fazer como tu tava fazendo
-    char M[YPDR][XPDR]={{'\\','ô','/'},{'/','H','\\'}};
+void imprime_mario(TIPO_FASE mario){
+    char M[Y_PDR][X_PDR]={{'\\','ô','/'},{'/','H','\\'}};
     int i,j;
-    for (i=0;i<YPDR;i++){
+    for (i=0;i<Y_PDR;i++){
             gotoxy((mario.coluna_inicial)*3,(mario.linha_inicial)*2+i);
         for (j=0;j<3;j++){
             printf("%c", M[i][j]);
@@ -631,108 +545,87 @@ void imprime_mario(TIPO_FASE mario){  // observação, não sei se não é melhor faz
     }
 }
 
-//-------------------------------------------------------------//
-
-void imprime_donk1(TIPO_FASE donk)
-{
-    char D[YPDR][XPDR]={{'}','ô','{'},{'_','H','_'}};
+void imprime_donk1(TIPO_FASE donk){
+    char D[Y_PDR][X_PDR]={{'}','ô','{'},{'_','H','_'}};
     int i,j;
-    for (i=0;i<YPDR;i++){
+    for (i=0;i<Y_PDR;i++){
             gotoxy((donk.coluna_inicial)*3,(donk.linha_inicial)*2+i);
-        for (j=0;j<XPDR;j++){
+        for (j=0;j<X_PDR;j++){
             printf("%c", D[i][j]);
         }
     }
 }
 
-//-------------------------------------------------------------//
-
-void imprime_donk2(TIPO_FASE donk)
-{
-    char D[YPDR][XPDR]={{'\\','o','/'},{'/',' ','\\'}};
+void imprime_donk2(TIPO_FASE donk){
+    char D[Y_PDR][X_PDR]={{'\\','o','/'},{'/',' ','\\'}};
     int i,j;
-    for (i=0;i<YPDR;i++){
+    for (i=0;i<Y_PDR;i++){
             gotoxy(donk.coluna_inicial,donk.linha_inicial+i);
-        for (j=0;j<XPDR;j++){
+        for (j=0;j<X_PDR;j++){
             printf("%c", D[i][j]);
         }
     }
 }
 
-//-------------------------------------------------------------//
-
-void imprime_princesa(TIPO_FASE prin)
-{
-    char P[YPDR][XPDR]={{'\\','o','/'},{'/','=','\\'}};
+void imprime_princesa(TIPO_FASE prin){
+    char P[Y_PDR][X_PDR]={{'\\','o','/'},{'/','=','\\'}};
     int i,j;
-    for (i=0;i<YPDR;i++){
+    for (i=0;i<Y_PDR;i++){
             gotoxy((prin.coluna_inicial)*3,(prin.linha_inicial)*2+i);
-        for (j=0;j<XPDR;j++){
+        for (j=0;j<X_PDR;j++){
             printf("%c", P[i][j]);
         }
     }
 }
 
-//-------------------------------------------------------------//
-
-void imprime_superficie(TIPO_FASE superficie)
-{
-  char S[YPDR][XPDR]={{'X','X','X'},{'X','X','X'}};
+void imprime_superficie(TIPO_FASE superficie){
+  char S[Y_PDR][X_PDR]={{'X','X','X'},{'X','X','X'}};
     int i,j;
-    for (i=0;i<YPDR;i++){
+    for (i=0;i<Y_PDR;i++){
             gotoxy((superficie.coluna_inicial)*3,((superficie.linha_inicial)*2+i));
-        for (j=0;j<XPDR;j++){
+        for (j=0;j<X_PDR;j++){
            printf("%c", S[i][j]);
         }
     }
 }
 
-//-------------------------------------------------------------//
-
-void imprime_escFIM(TIPO_FASE escfim)
-{
-  char H[YPDR][XPDR]={{'|','X','|'},{'|','-','|'}};
+void imprime_escFIM(TIPO_FASE escfim){
+  char H[Y_PDR][X_PDR]={{'|','X','|'},{'|','-','|'}};
     int i,j;
-    for (i=0;i<YPDR;i++){
+    for (i=0;i<Y_PDR;i++){
             gotoxy((escfim.coluna_inicial)*3,((escfim.linha_inicial)*2+i));
-        for (j=0;j<XPDR;j++){
+        for (j=0;j<X_PDR;j++){
            printf("%c", H[i][j]);
         }
     }
 }
 
-//-------------------------------------------------------------//
-
 void imprime_escOK(TIPO_FASE escboa){
- char E[YPDR][XPDR]={{'|','-','|'},{'|','-','|'}};
+ char E[Y_PDR][X_PDR]={{'|','-','|'},{'|','-','|'}};
     int i,j;
-    for (i=0;i<YPDR;i++){
+    for (i=0;i<Y_PDR;i++){
             gotoxy((escboa.coluna_inicial)*3,((escboa.linha_inicial)*2+i));
-        for (j=0;j<XPDR;j++){
+        for (j=0;j<X_PDR;j++){
            printf("%c", E[i][j]);
         }
     }
 }
-
-//-------------------------------------------------------------//
 
 void imprime_escQ(TIPO_FASE escquebrada){
- char E[YPDR][XPDR]={{'|','-','|'},{' ','-','|'}};
+ char E[Y_PDR][X_PDR]={{'|','-','|'},{' ','-','|'}};
     int i,j;
-    for (i=0;i<YPDR;i++){
+    for (i=0;i<Y_PDR;i++){
             gotoxy((escquebrada.coluna_inicial)*3,((escquebrada.linha_inicial)*2+i));
-        for (j=0;j<XPDR;j++){
+        for (j=0;j<X_PDR;j++){
            printf("%c", E[i][j]);
         }
     }
 }
 
-//-------------------------------------------------------------//
-
 void imprime_barrile(TIPO_FASE barrilparado){
- char B1[YPDR][XPDR]={{'/','^','\\'},{'\\','Z','/'}};
+ char B1[Y_PDR][X_PDR]={{'/','^','\\'},{'\\','Z','/'}};
     int i,j;
-    for (i=0;i<YPDR;i++){
+    for (i=0;i<Y_PDR;i++){
             gotoxy((barrilparado.coluna_inicial)*3,((barrilparado.linha_inicial)*2+i));
         for (j=0;j<3;j++){
            printf("%c", B1[i][j]);
@@ -740,102 +633,87 @@ void imprime_barrile(TIPO_FASE barrilparado){
     }
 }
 
-//-------------------------------------------------------------//
-
 void imprime_barrilm(TIPO_FASE barrilmovel){
- char B2[YPDR][XPDR]={{'/','^','\\'},{'\\',' ','/'}};
+ char B2[Y_PDR][X_PDR]={{'/','^','\\'},{'\\',' ','/'}};
     int i,j;
-    for (i=0;i<YPDR;i++){
+    for (i=0;i<Y_PDR;i++){
             gotoxy((barrilmovel.coluna_inicial)*3,((barrilmovel.linha_inicial)*2+i));
-        for (j=0;j<XPDR;j++){
+        for (j=0;j<X_PDR;j++){
            printf("%c", B2[i][j]);
         }
     }
 }
 
 void imprime_rampadir(TIPO_FASE rdireita){
- char RD[YPDR][XPDR*2]={{' ',' ',' ','_','.','-'},{'_','.','-',' ',' ',' '}};
+
+ char RD[Y_PDR][X_PDR*2]={{' ',' ',' ','_','.','-'},{'_','.','-',' ',' ',' '}};
     int i,j;
-    for (i=0;i<YPDR;i++){
+    for (i=0;i<Y_PDR;i++){
             gotoxy((rdireita.coluna_inicial)*3,((rdireita.linha_inicial)*2+i));
-        for (j=0;j<XPDR*2;j++){
+        for (j=0;j<X_PDR*2;j++){
            printf("%c", RD[i][j]);
         }
     }
 }
-
 void imprime_rampaesq(TIPO_FASE resquerda){
- char RD[YPDR][XPDR*2]={{'-','.','_',' ',' ',' '},{' ',' ',' ','-','.','_'}};
+
+ char RD[Y_PDR][X_PDR*2]={{'-','.','_',' ',' ',' '},{' ',' ',' ','-','.','_'}};
     int i,j;
-    for (i=0;i<YPDR;i++){
+    for (i=0;i<Y_PDR;i++){
             gotoxy((resquerda.coluna_inicial)*3,((resquerda.linha_inicial)*2+i));
-        for (j=0;j<XPDR*2;j++){
+        for (j=0;j<X_PDR*2;j++){
            printf("%c", RD[i][j]);
         }
     }
 }
-
-
-//-------------------------------------------------------------//
-
-void imprime_fase(TIPO_FASE paraimpressao[], int qtd_objetos, CONTROLE *mario, CONTROLE *princesa, CONTROLE *donkey, CONTROLE barrilm[]){
+void imprime_fase(PARAMETROS *parametros, int qtd_objetos){ // CHECAR ESSA CONVERSAO
     int i, j=0;
-    #ifdef DEBUG
-       FILE * vitor; // para analisar se a impressão esta  correta
-       fopen("vitor.csv","wt"); // gera um csv
-       fprintf(vitor,"TIPO,COLUNA,LINHA,VELOCIDADE,\n");
-    #endif // DEBUG
-    textcolor(3);
+    textcolor(AQUA);
     for (i=0;i<qtd_objetos;i++)
     {
-    #ifdef DEBUG
-       fprintf(vitor,"%c,",paraimpressao[i].tipo);
-       fprintf(vitor,"%d,",paraimpressao[i].coluna_inicial);
-       fprintf(vitor,"%d,",paraimpressao[i].linha_inicial);
-       fprintf(vitor,"%0.f,\n",paraimpressao[i].velocidade);
-       char c;
-       c=getch( ); //espera tu teclar algo para a impressão dai fica mais visual se ta fazendo certo
-    #endif // DEBUG
-    switch(paraimpressao[i].tipo){
-            case 'M': imprime_mario(paraimpressao[i]);
-                      mario->x = paraimpressao[i].linha_inicial;
-                      mario->y = paraimpressao[i].coluna_inicial;
+        switch(parametros->vetor_objetos[i].tipo)
+        {
+            case 'M': parametros->mario->x = (parametros->vetor_objetos[i].linha_inicial)*2; // OBS: X = LINHA * 2, Y = COLUNA * 3 (x,y) são as coordenadas reais no prompt
+                      parametros->mario->y = (parametros->vetor_objetos[i].coluna_inicial)*3;
+                      parametros->inc_mario->linha_inicial = parametros->mario->x; // Iniciais do mario, caso precise
+                      parametros->inc_mario->coluna_inicial = parametros->mario->y;
+                      imprime_mario(parametros->vetor_objetos[i]);
                       break;
-            case 'P': imprime_princesa(paraimpressao[i]);
-                      princesa->x = paraimpressao[i].linha_inicial;
-                      princesa->y = paraimpressao[i].coluna_inicial;
+            case 'P': imprime_princesa(parametros->vetor_objetos[i]);
+                      parametros->princesa->x = (parametros->vetor_objetos[i].linha_inicial)*2;
+                      parametros->princesa->y = (parametros->vetor_objetos[i].coluna_inicial)*3;
                       break;
-            case 'K': imprime_donk1(paraimpressao[i]);
-                      donkey->x = paraimpressao[i].linha_inicial;
-                      donkey->y = paraimpressao[i].coluna_inicial;
-                break;
-            case 'G': imprime_rampaesq(paraimpressao[i]);
-                break;
-            case 'F': imprime_rampadir(paraimpressao[i]);
-                break;
-            case 'S': imprime_superficie(paraimpressao[i]);
-                break;
-            case 'E': imprime_escOK(paraimpressao[i]);
-                break;
-            case 'Q':  imprime_escQ(paraimpressao[i]);
-                 break;
-            case 'H': imprime_escFIM(paraimpressao[i]);
-                break;
-            case 'B':if(paraimpressao[i].velocidade>0)  // barril que se mexe
+            case 'K': imprime_donk1(parametros->vetor_objetos[i]);
+                      parametros->donkey->x = (parametros->vetor_objetos[i].linha_inicial)*2;
+                      parametros->donkey->y = (parametros->vetor_objetos[i].coluna_inicial)*3;
+                      break;
+            case 'G': imprime_rampaesq(parametros->vetor_objetos[i]);
+                      break;
+            case 'F': imprime_rampadir(parametros->vetor_objetos[i]);
+                      break;
+            case 'S': imprime_superficie(parametros->vetor_objetos[i]);
+                      break;
+            case 'E': imprime_escOK(parametros->vetor_objetos[i]);
+                      break;
+            case 'Q':  imprime_escQ(parametros->vetor_objetos[i]);
+                      break;
+            case 'H': imprime_escFIM(parametros->vetor_objetos[i]);
+                      break;
+            case 'B':if(parametros->vetor_objetos[i].velocidade>0)  // barril que se mexe
                     {
-                        imprime_barrilm(paraimpressao[i]);
-                        barrilm[j].x = paraimpressao[i].linha_inicial;
-                        barrilm[j].y = paraimpressao[i].coluna_inicial;
+                        imprime_barrilm(parametros->vetor_objetos[i]);
+                        parametros->barrilm[j].x = parametros->vetor_objetos[i].linha_inicial;
+                        parametros->barrilm[j].y = parametros->vetor_objetos[i].coluna_inicial;
                         j++;
                     }
                      else
-                       imprime_barrile(paraimpressao[i]);  // barril estático/ parado
+                        imprime_barrile(parametros->vetor_objetos[i]);  // barril estático
                      break;
-            }//*/
         }
-        #ifdef DEBUG
-            fclose(vitor);
-        #endif // DEBUG
+    }
+    gotoxy(0,-2);
+    printf("VIDAS %d \n", parametros->vidas);
+    printf("SCORE ATUAL/MAX: %d / %d",parametros->score_atual, parametros->score_max);
 }
 
 
@@ -853,8 +731,26 @@ Pedro, 18/06:
     - Inclusão de Beeps; MAIS VIRÃO
     - Criação de variáveis do tipo CONTROLE* para princesa, donkey e CONTROLE[] para os barris móveis);
     - Criação do define MAX_BARRIL (Número máximo de barris móveis na tela)
-    - Criação da struct PARAMETROS ----- LER ISSO ---- -> Preciso saber o que tu acha de mover os scores e as vidas pro PARAMETROS, daí fica mais fácil de passar os bagulhos por referência
-      ----------------------------------------------------Se tu for ver, eu tive que colocar várias vezes (CONTROLE *mario, CONTROLE *princesa, CONTROLE *donkey, CONTROLE barrilm[])
-     -----------------------------------------------------Então seria conveniente ter uma struct PARAMETROS contendo essas variáveis, tipo o que eu fiz lá em cima, mas preciso saber se tu acha
-      ----------------------------------------------------Que isso vai dar certo, hahahaha
+    - Criação da struct PARAMETROS
+
+Pedro, 19/06:
+    - Adaptação da função jogo();
+    - Contador de vidas; (Tem que adaptar para os barris moveis ainda)
+    - Implementação das telas de vitória e derrota;
+    - Mudança na função de move_mario();
+    - Criação do define PAUSE;
+    - Implementação do PAUSE; (Tem que criar a função salvar_jogo() )
+    - Adaptação de tudo para o struct PARAMETROS;
+    - Criação da função apaga_mario(); para deixar mais claro o código de mover
+    - Criação da função posiciona_mario(); para deixar mais claro o código ----> Pode substituir a imprime_mario()
+    - Criação de define paras as CORES;
+
+    Ideias: - Fazer uma função que retorna 0 ou 1 para ver se as posições batem
+            - Adicionar mais campos em PARAMETROS:
+              -> Vetor superficie, vetor escada normal, vetor escada quebrada, vetor fim escada, vetor rampad, vetor rampae para controlar o movimento e usar a função acima
+              -> OBS.: Declarar esses vetores como ponteiros e alocar memória para eles
+              -> OBS2.: Vai precisar de um define de MAX para cada um dos vetores
+            - Será que é mesmo necessário usar matrizes nessas funções de impressão inicial?
+            - Colocar cor diferente nas impressões (dentro de cada função imprimeX() colocar uma cor)
+
 */
