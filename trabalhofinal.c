@@ -1,15 +1,9 @@
-
 /***************************DONKEY KONG ASCII**********************************
-
    **************************DESENVOLVIDO POR*******************************
-
                           Pedro Rodrigues de Lima
                                    &
                          Vitor Almeida de Carvalho
-
-
     *******************SINTAXE_DE_ORGANIZAÇÃO_DE_CÓDIGO*********************
-
     1-As áreas são delimitadas por cabeçalhos do tipo: //###NOME_DA_AREA###//
     2-Após o sketch de cada função há um comentário sobre sua utilidade.
     3-Caso algum item necessite, haverá um comentário logo em seguida.
@@ -18,9 +12,7 @@
     cilitar a leitura;
     6-Utilizar nomes explicativos para variáves. Ex:int posicao_do_mario.
     Ex: variavel_com_nome_muito_grande
-
     ***************************ESTRUTURA_DO_CÓDIGO**************************
-
     Este arquivo está dividido de forma a agrupar em áreas, por similaridade,
     os trechos de código. São as áreas:
         0-REFERENCIAS: Onde estão alguns dados  úteis para a elaboração do
@@ -35,7 +27,6 @@
         das com tipo de parametros.
         5-MAIN: Onde está o main do programa.
         6-FUNÇÕES: Onde estão as funções/subrotinas criadas para o jogo.
-
 *******************************************************************************/
 
 /*0-REFERENCIAS
@@ -62,14 +53,21 @@ Referência das cores da função text_color()
 
 //######################2-DEFINIÇÕES:############################//
 // definições de itens do jogo
-#define SCORE_INICIAL 1000  // Pontuação Inicial
-#define VIDAS_INICIAIS 3    // Número de vidas inicial
-#define Y_MAX 62       // Y máximo do prompt
-#define X_MAX 46       // X máximo do prompt
-#define X_PDR 3        // Tamanho X padrão para impressão
-#define Y_PDR 2        // Tamanho Y padrão para impressão
-#define MAX_OBJ 460    // Numero máximo de objetos possíveis
-#define MAX_BARRIL 15  // Número máximo de barris móveis simultaneamente na tela
+#define SCORE_INICIAL 1000      // Pontuação Inicial
+#define VIDAS_INICIAIS 3        // Número de vidas inicial
+#define Y_MAX 62                // Y máximo do prompt
+#define X_MAX 46                // X máximo do prompt
+#define X_PDR 3                 // Tamanho X padrão para impressão
+#define Y_PDR 2                 // Tamanho Y padrão para impressão
+#define MAX_OBJ 460             // Numero máximo de objetos possíveis
+#define MAX_BARRIL_M 20         // Número máximo de barris móveis simultaneamente na tela
+#define MAX_BARRIL_E 20         // Número máximo de barris estaticos
+#define MAX_SUPERFICIE 100      // Número máximo de superficies
+#define MAX_ESCADA_TOPO 10      // Número máximo de fim da escada
+#define MAX_ESCADA_MEIO 50      // Número máximo de escadas ok
+#define MAX_ESCADA_QUEB 10      // Número máximo de escadas quebradas
+#define MAX_RAMPA_DIREITA 20    // Número máximo de rampas para a direita
+#define MAX_RAMPA_ESQUERDA 20   // Número máximo de rampas para a esquerda
 // cores da função text_color()
 #define BLACK 0
 #define BLUE 1
@@ -126,25 +124,36 @@ typedef struct CONTROLE{
     int y;
 }CONTROLE;
 
+typedef struct INDICES{
+    int i_barril_e;
+    int i_barril_m;
+    int i_superficie;
+    int i_escada_topo;
+    int i_escada_meio;
+    int i_escada_quebrada;
+    int i_rampa_direita;
+    int i_rampa_esquerda;
+}INDICES;
+
 typedef struct PARAMETROS{
     TIPO_FASE *vetor_objetos;
     TIPO_FASE *inc_mario;
     CONTROLE *mario;
     CONTROLE *princesa;
     CONTROLE *donkey;
-    CONTROLE *barrilm;
-    /*
-    CONTROLE *barrile;
+    CONTROLE *barril_m;
+    CONTROLE *barril_e;
     CONTROLE *superficie;
     CONTROLE *escada_topo;
     CONTROLE *escada_meio;
     CONTROLE *escada_quebrada;
     CONTROLE *rampa_direita;
     CONTROLE *rampa_esquerda;
-    */
     int score_atual;
     int score_max;
     int vidas;
+    INDICES *indices;
+
 }PARAMETROS;
 
 //#######################4-SKETCHES DE FUNÇÕES############################//
@@ -165,7 +174,7 @@ void imprime_instrucoes();          // Imprime a tela de instruções OK
 void imprime_mario(TIPO_FASE);      // MAIS OU MENOS
 void imprime_donk1(TIPO_FASE);      // MAIS OU MENOS
 void imprime_donk2(TIPO_FASE);      // MAIS OU MENOS
-void imprime_barrilm(TIPO_FASE);    // MAIS OU MENOS
+void imprime_barril_m(TIPO_FASE);    // MAIS OU MENOS
 void imprime_barrile(TIPO_FASE);    // MAIS OU MENOS
 void imprime_princesa(TIPO_FASE);   // MAIS OU MENOS
 void imprime_escOK(TIPO_FASE);      // MAIS OU MENOS
@@ -191,9 +200,27 @@ int main(){
     parametros->mario = malloc(sizeof(CONTROLE));
     parametros->princesa = malloc(sizeof(CONTROLE));
     parametros->donkey = malloc(sizeof(CONTROLE));
-    parametros->barrilm = malloc(sizeof(CONTROLE)* MAX_BARRIL);
+    parametros->barril_m = malloc(sizeof(CONTROLE)* MAX_BARRIL_M);
+    parametros->barril_e = malloc(sizeof(CONTROLE)* MAX_BARRIL_E);
+    parametros->superficie = malloc(sizeof(CONTROLE)* MAX_SUPERFICIE);
+    parametros->escada_topo = malloc(sizeof(CONTROLE)* MAX_ESCADA_TOPO);
+    parametros->escada_meio = malloc(sizeof(CONTROLE)* MAX_ESCADA_MEIO);
+    parametros->escada_quebrada = malloc(sizeof(CONTROLE)* MAX_ESCADA_QUEB);
+    parametros->rampa_direita = malloc(sizeof(CONTROLE)* MAX_RAMPA_DIREITA);
+    parametros->rampa_esquerda = malloc(sizeof(CONTROLE)* MAX_RAMPA_ESQUERDA);
+
     parametros->inc_mario = malloc(sizeof(TIPO_FASE));
     parametros->vetor_objetos = malloc(sizeof(TIPO_FASE)* MAX_OBJ);
+    parametros->indices = malloc(sizeof(INDICES));
+    parametros->indices->i_barril_m = 0;
+    parametros->indices->i_barril_e = 0;
+    parametros->indices->i_superficie = 0;
+    parametros->indices->i_escada_topo = 0;
+    parametros->indices->i_escada_meio = 0;
+    parametros->indices->i_escada_quebrada = 0;
+    parametros->indices->i_rampa_direita = 0;
+    parametros->indices->i_rampa_esquerda = 0;
+
     controle_menu(parametros); // Função que controla as opções do menu principal
 
     return 0;
@@ -639,7 +666,7 @@ void imprime_barrile(TIPO_FASE barrilparado){
     }
 }
 
-void imprime_barrilm(TIPO_FASE barrilmovel){
+void imprime_barril_m(TIPO_FASE barrilmovel){
  char B2[Y_PDR][X_PDR]={{'/','^','\\'},{'\\',' ','/'}};
     int i,j;
     for (i=0;i<Y_PDR;i++){
@@ -679,11 +706,11 @@ void imprime_fase(PARAMETROS *parametros, int qtd_objetos){ // CHECAR ESSA CONVE
     {
         switch(parametros->vetor_objetos[i].tipo)
         {
-            case 'M': parametros->mario->x = (parametros->vetor_objetos[i].linha_inicial)*2; // OBS: X = LINHA * 2, Y = COLUNA * 3 (x,y) são as coordenadas reais no prompt
+            case 'M': imprime_mario(parametros->vetor_objetos[i]);
+                      parametros->mario->x = (parametros->vetor_objetos[i].linha_inicial)*2; // OBS: X = LINHA * 2, Y = COLUNA * 3 (x,y) são as coordenadas reais no prompt do C[0][0]
                       parametros->mario->y = (parametros->vetor_objetos[i].coluna_inicial)*3;
                       parametros->inc_mario->linha_inicial = parametros->mario->x; // Iniciais do mario, caso precise
                       parametros->inc_mario->coluna_inicial = parametros->mario->y;
-                      imprime_mario(parametros->vetor_objetos[i]);
                       break;
             case 'P': imprime_princesa(parametros->vetor_objetos[i]);
                       parametros->princesa->x = (parametros->vetor_objetos[i].linha_inicial)*2;
@@ -694,43 +721,76 @@ void imprime_fase(PARAMETROS *parametros, int qtd_objetos){ // CHECAR ESSA CONVE
                       parametros->donkey->y = (parametros->vetor_objetos[i].coluna_inicial)*3;
                       break;
             case 'G': imprime_rampaesq(parametros->vetor_objetos[i]);
+                      parametros->rampa_esquerda[parametros->indices->i_rampa_esquerda].x = (parametros->vetor_objetos[i].linha_inicial)*2;
+                      parametros->rampa_esquerda[parametros->indices->i_rampa_esquerda].y = (parametros->vetor_objetos[i].coluna_inicial)*3;
+                      (parametros->indices->i_rampa_esquerda)++;
                       break;
             case 'F': imprime_rampadir(parametros->vetor_objetos[i]);
+                      parametros->rampa_direita[parametros->indices->i_rampa_direita].x = (parametros->vetor_objetos[i].linha_inicial)*2;
+                      parametros->rampa_direita[parametros->indices->i_rampa_direita].y = (parametros->vetor_objetos[i].coluna_inicial)*3;
+                      (parametros->indices->i_rampa_direita)++;
                       break;
             case 'S': imprime_superficie(parametros->vetor_objetos[i]);
+                      parametros->superficie[parametros->indices->i_superficie].x = (parametros->vetor_objetos[i].linha_inicial)*2;
+                      parametros->superficie[parametros->indices->i_superficie].y = (parametros->vetor_objetos[i].coluna_inicial)*3;
+                      (parametros->indices->i_superficie)++;
+                      break;
+            case 'Q': imprime_escQ(parametros->vetor_objetos[i]);
+                      parametros->escada_quebrada[parametros->indices->i_escada_quebrada].x = (parametros->vetor_objetos[i].linha_inicial)*2;
+                      parametros->escada_quebrada[parametros->indices->i_escada_quebrada].y = (parametros->vetor_objetos[i].coluna_inicial)*3;
+                      (parametros->indices->i_escada_quebrada)++;
                       break;
             case 'E': imprime_escOK(parametros->vetor_objetos[i]);
-                      break;
-            case 'Q':  imprime_escQ(parametros->vetor_objetos[i]);
+                      parametros->escada_meio[parametros->indices->i_escada_meio].x = (parametros->vetor_objetos[i].linha_inicial)*2;
+                      parametros->escada_meio[parametros->indices->i_escada_meio].y = (parametros->vetor_objetos[i].coluna_inicial)*3;
+                      (parametros->indices->i_escada_meio)++;
                       break;
             case 'H': imprime_escFIM(parametros->vetor_objetos[i]);
+                      parametros->escada_topo[parametros->indices->i_escada_topo].x = (parametros->vetor_objetos[i].linha_inicial)*2;
+                      parametros->escada_topo[parametros->indices->i_escada_topo].y = (parametros->vetor_objetos[i].coluna_inicial)*3;
+                      (parametros->indices->i_escada_topo)++;
                       break;
-            case 'B':if(parametros->vetor_objetos[i].velocidade>0)  // barril que se mexe
+            case 'B':if((parametros->vetor_objetos[i].velocidade)>0)  // barril que se mexe
                     {
-                        imprime_barrilm(parametros->vetor_objetos[i]);
-                        parametros->barrilm[j].x = parametros->vetor_objetos[i].linha_inicial;
-                        parametros->barrilm[j].y = parametros->vetor_objetos[i].coluna_inicial;
-                        j++;
+                        imprime_barril_m(parametros->vetor_objetos[i]);
+                        parametros->barril_m[parametros->indices->i_barril_m].x = (parametros->vetor_objetos[i].linha_inicial)*2;
+                        parametros->barril_m[parametros->indices->i_barril_m].y = (parametros->vetor_objetos[i].coluna_inicial)*3;
+                        (parametros->indices->i_barril_m)++;
                     }
                      else
+                     {
                         imprime_barrile(parametros->vetor_objetos[i]);  // barril estático
+                        parametros->barril_e[parametros->indices->i_barril_e].x = (parametros->vetor_objetos[i].linha_inicial)*2;
+                        parametros->barril_e[parametros->indices->i_barril_e].y = (parametros->vetor_objetos[i].coluna_inicial)*3;
+                        (parametros->indices->i_barril_e)++;
+                     }
                      break;
         }
     }
     gotoxy(0,-2);
     printf("VIDAS %d \n", parametros->vidas);
     printf("SCORE ATUAL/MAX: %d / %d",parametros->score_atual, parametros->score_max);
+
+
+   /* Teste indices
+    printf("%d\n", parametros->indices->i_escada_topo);
+    printf("%d\n", parametros->indices->i_escada_meio);
+    printf("%d\n", parametros->indices->i_escada_quebrada);
+    printf("%d\n", parametros->indices->i_barril_e);
+    printf("%d\n", parametros->indices->i_barril_m);
+    printf("%d\n", parametros->indices->i_superficie);
+    printf("%d\n", parametros->indices->i_rampa_direita);
+    printf("%d", parametros->indices->i_rampa_esquerda);
+    system("pause");*/
 }
 
 
 /* ############ CHANGELOG ############
     ############ Legenda: ###########
-
          '-' : Mudança
         '->' : Subtópico da mudança
     '####=>' : Importante ler
     ########### ######### ###########
-
 Pedro, 18/06:
     - Criação da função controle_menu(); para poder iniciar jogos novamente caso o usuário ganhe ou perda(Ver funções abaixo)
     - Criação da função novo_jogo();
@@ -745,7 +805,6 @@ Pedro, 18/06:
     - Criação de variáveis do tipo CONTROLE* para princesa, donkey e CONTROLE[] para os barris móveis);
     - Criação do define MAX_BARRIL (Número máximo de barris móveis na tela)
     - Criação da struct PARAMETROS
-
 Pedro, 19/06:
     - Adaptação da função jogo();
     - Contador de vidas; (Tem que adaptar para os barris moveis ainda)
@@ -757,7 +816,6 @@ Pedro, 19/06:
     - Criação da função apaga_mario(); para deixar mais claro o código de mover
     - Criação da função posiciona_mario(); para deixar mais claro o código ----> Pode substituir a imprime_mario()
     - Criação de define paras as CORES;
-
     Ideias: - Fazer uma função que retorna 0 ou 1 para ver se as posições batem
             - Adicionar mais campos em PARAMETROS:
               -> Vetor superficie, vetor escada normal, vetor escada quebrada, vetor fim escada, vetor rampad, vetor rampae para controlar o movimento e usar a função acima
@@ -765,5 +823,10 @@ Pedro, 19/06:
               -> OBS2.: Vai precisar de um define de MAX para cada um dos vetores
            ###=> Será que é mesmo necessário usar matrizes nessas funções de impressão inicial?
             - Colocar cor diferente nas impressões (dentro de cada função imprimeX() colocar uma cor)
+
+Pedro, 20/06
+    - Criação da struct INDICES que contém o número total de cada elemento na fase
+    - Criação de variáveis CONTROLE e uma variável INDICES dentro da struct PARAMETROS
+        -> Talvez seja melhor fazer um vetor de 8 posições e defines tipo IND_BARRIL_M 0 e adicionar 1 cada vez que encontrar
 
 */
