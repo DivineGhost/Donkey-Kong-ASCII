@@ -54,7 +54,7 @@ Referência das cores da função text_color()
 //######################2-DEFINIÇÕES:############################//
 // definições de itens do jogo
 #define SCORE_INICIAL 1000      // Pontuação Inicial
-#define VIDAS_INICIAIS 3        // Número de vidas inicial
+#define VIDAS_INICIAIS 0        // Número de vidas inicial
 #define Y_MAX 62                // Y máximo do prompt
 #define X_MAX 46                // X máximo do prompt
 #define X_PDR 3                 // Tamanho X padrão para impressão
@@ -153,29 +153,31 @@ typedef struct PARAMETROS{
     int score_max;
     int vidas;
     INDICES *indices;
-
 }PARAMETROS;
 
 //#######################4-SKETCHES DE FUNÇÕES############################//
 
 void hide_cursor();                 // Esconde o cursor do prompt OK
-int main_menu();                     // Menu principal, retorna a opção selecionada pelo jogador
+int main_menu();                    // Menu principal, retorna a opção selecionada pelo jogador
 int setas();                        // Utilização das setas direcionais do teclado OK
 void gotoxy(int,int);               // Move o cursor do prompt para uma certa posição OK
-void text_color(int);                // Muda a cor do texto do prompt de acordo com o código de cores OK
+void text_color(int);               // Muda a cor do texto do prompt de acordo com o código de cores OK
 int ler_mapa(TIPO_FASE[]);          // Lê um arquivo fase.bin OK
-void format_prompt();                // Formata o prompt: Define dimensões e linguagem padrão OK
+void format_prompt();               // Formata o prompt: Define dimensões e linguagem padrão OK
 void imprime_fase(PARAMETROS*,int); // Imprime o mapa OK
+void imprime_fase_nova(PARAMETROS*, int); // Imprime fase e mapeia
 int move_mario(PARAMETROS*);        // Move o mário A FAZER
+int tempo(clock_t);                 // Retorna
 void apaga_mario(PARAMETROS*);      // Apaga a posição do márioOK
 void posiciona_mario(PARAMETROS*);  // Imprime o mário OK
 void imprime_tela_incial();         // Imprime a tela inicial (menu principal) OK
 void imprime_instrucoes();          // Imprime a tela de instruções OK
+void cor_escadas(int);              // Colorir as escadas
 void imprime_mario(TIPO_FASE);      // MAIS OU MENOS
 void imprime_donk1(TIPO_FASE);      // MAIS OU MENOS
 void imprime_donk2(TIPO_FASE);      // MAIS OU MENOS
-void imprime_barril_m(TIPO_FASE);    // MAIS OU MENOS
-void imprime_barrile(TIPO_FASE);    // MAIS OU MENOS
+void imprime_barril_m(TIPO_FASE);   // MAIS OU MENOS
+void imprime_barril_e(TIPO_FASE);   // MAIS OU MENOS
 void imprime_princesa(TIPO_FASE);   // MAIS OU MENOS
 void imprime_escOK(TIPO_FASE);      // MAIS OU MENOS
 void imprime_escQ(TIPO_FASE);       // MAIS OU MENOS
@@ -208,7 +210,6 @@ int main(){
     parametros->escada_quebrada = malloc(sizeof(CONTROLE)* MAX_ESCADA_QUEB);
     parametros->rampa_direita = malloc(sizeof(CONTROLE)* MAX_RAMPA_DIREITA);
     parametros->rampa_esquerda = malloc(sizeof(CONTROLE)* MAX_RAMPA_ESQUERDA);
-
     parametros->inc_mario = malloc(sizeof(TIPO_FASE));
     parametros->vetor_objetos = malloc(sizeof(TIPO_FASE)* MAX_OBJ);
     parametros->indices = malloc(sizeof(INDICES));
@@ -231,7 +232,7 @@ int controle_menu(PARAMETROS *parametros){
     int controle;
     int indfor;
     for (indfor=0;indfor<MAX_OBJ;indfor++)
-        parametros->vetor_objetos[indfor].tipo='Z';
+        parametros->vetor_objetos[indfor].tipo=' ';
     controle=main_menu();
     switch(controle)
     {
@@ -248,6 +249,7 @@ int controle_menu(PARAMETROS *parametros){
          return 0;
          break;
     }
+
 }
 
 int ler_mapa(TIPO_FASE vetor_objetos[]){
@@ -262,8 +264,8 @@ int ler_mapa(TIPO_FASE vetor_objetos[]){
     else {
      while(!feof(fase)){
         fread(&buffer,sizeof(TIPO_FASE),1,fase);
-            vetor_objetos[contador]=buffer;  // aqui de fato é feito o armazenamento de dados
-            contador++;
+        vetor_objetos[contador]=buffer;  // aqui de fato é feito o armazenamento de dados
+        contador++;
             }
     }
     fclose(fase);
@@ -271,17 +273,17 @@ int ler_mapa(TIPO_FASE vetor_objetos[]){
 }
 
 void hide_cursor(){
-    HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE); // Esconde o Cursor do console
+    HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_CURSOR_INFO info;
     info.dwSize = 100;
-    info.bVisible = FALSE;
+    info.bVisible = FALSE; // Esconde o Cursor do console
     SetConsoleCursorInfo(consoleHandle, &info);
 }
 
- void format_prompt(){
-    setlocale(LC_ALL, "Portuguese"); // Língua para português  //prompt em português para acentos e afins
-    system("title Donkey Kong"); // Muda nome do prompt
-    system("color 03");                             // Cor normal do prompt
+void format_prompt(){
+    setlocale(LC_ALL, "Portuguese");                 // Prompt em português para acentos e afins
+    system("title Donkey Kong");                     // Muda nome do prompt
+    system("color 00");                              // Cor normal do prompt
     system("mode 60, 48");                           // Modo para não exceder o buffer
     SMALL_RECT WinRect = {0, 0, X_MAX, Y_MAX};       // Formata o tamanho do prompt
     SMALL_RECT* WinSize = &WinRect;
@@ -297,13 +299,13 @@ void text_color(int ForgC){
     if(GetConsoleScreenBufferInfo(hStdOut, &csbi))
     {
         wColor = (csbi.wAttributes & 0xF0) + (ForgC & 0x0F);
-        SetConsoleTextAttribute(hStdOut, wColor);
+        SetConsoleTextAttribute(hStdOut, wColor); // Muda a cor do texto
     }
 }
 
-void gotoxy (int x, int y){
+void gotoxy (int x, int y){ // Move o cursor do prompt para (x, y)
  COORD coord = {0, 0};
- coord.X =x; coord.Y = y+2; // X and Y coordinates
+ coord.X =x; coord.Y = y+2; // Coordenadas X e Y
  SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 }
 
@@ -314,13 +316,15 @@ int setas(){
         valor_seta = getch(); // Continua pegando caracteres
     while   (valor_seta != CIMA
           && valor_seta != BAIXO
-          && valor_seta != ESQUERDA
-          && valor_seta != DIREITA
           && valor_seta != ENTER
           && valor_seta != ESC
-          && valor_seta != SPACEBAR);
+          && valor_seta != SPACEBAR
+          && valor_seta != 'W'
+          && valor_seta != 'w'
+          && valor_seta != 'S'
+          && valor_seta != 's');
 
-    return valor_seta; // Manda para o main a seta lida
+    return valor_seta; // Manda a seta lida
 }
 
 int main_menu(){
@@ -328,7 +332,7 @@ int main_menu(){
     int x =24 , y[] = {27, 31, 35, 39};
     int contador = 0, sair = FALSE; // Coordenadas da seta, contador índice da seta, booleano sair para sair do menu
     system("cls"); // Limpa a tela
-    text_color(12); // Cor vermelha
+    text_color(RED); // Cor vermelha
     imprime_tela_incial();
 
     do // Faz ao menos uma vez
@@ -337,6 +341,8 @@ int main_menu(){
         printf(">"); // Imprime a seta
         switch(setas())
         {
+            case 'w':
+            case 'W':
             case CIMA: if(contador != 0) // Caso o usuário aperte direcional para cima
                        { // Se o contador não estiver na primeira posição
                            gotoxy(x, y[contador]);
@@ -347,10 +353,12 @@ int main_menu(){
                             { // Se o contador estiver na primeira posição
                                 gotoxy(x, y[contador]);
                                 printf(" "); // Apaga a seta anterior
-                                contador = 3; // Define contador como 2 (última posição na tela)
+                                contador = 3; // Define contador como 3 (última posição na tela)
                             }
                        break;
 
+            case 's':
+            case 'S':
             case BAIXO: if(contador != 3) // Caso o usuário aperte direcional para baixo
                         { // Se o contador não estiver na última posição
                            gotoxy(x, y[contador]);
@@ -365,21 +373,20 @@ int main_menu(){
                              }
                         break;
             case SPACEBAR:
-            case ENTER: if (contador==2){
-                        imprime_instrucoes();
-                        }
-                        else {
-                        sair = TRUE;
-                        } // Se o usuário teclar ENTER, sai do loop
+            case ENTER: if (contador==2)
+                            imprime_instrucoes();
+                        else
+                            sair = TRUE; // Se o usuário teclar ENTER, sai do loop
                         break;
 
             case ESC: if(contador != 3) // Se o usuário teclar ESC (No caso seria um atalho para sair do programa rapidamente)
-                      { // Se o contador for diferente de 2
+                      { // Se o contador for diferente de 3
                           gotoxy(x, y[contador]);
                           printf(" ");
                           contador = 3; // Move a seta para a última posição
                       }
-                      else return SAIR;
+                      else
+                          return SAIR;
                       break;
         }
 
@@ -389,14 +396,22 @@ int main_menu(){
     return contador;
 }
 
-void apaga_mario(PARAMETROS *parametros){
+int tempo(clock_t c0){ // Retorna a diferença entre o tempo passado como parâmetro e o tempo calculado a partir da fórmula abaixo
+    clock_t c1 = clock();
+    double runtime_diff_ms;
+    runtime_diff_ms= (c1 - c0) * 1000. / CLOCKS_PER_SEC; // Variação de tempo = (Tempo Final - Tempo Inicial) * 1000. / Clocks por segundo
+    int retorno=(int)runtime_diff_ms;
+    return retorno;
+}
+
+void apaga_mario(PARAMETROS *parametros){ // Apaga o Mario
     gotoxy(parametros->mario->y, parametros->mario->x);
     printf("   ");
     gotoxy(parametros->mario->y, parametros->mario->x+1);
     printf("   ");
 }
 
-void posiciona_mario(PARAMETROS *parametros){
+void posiciona_mario(PARAMETROS *parametros){ // Imprime o Mário
     gotoxy(parametros->mario->y,parametros->mario->x);
     printf("\\ô/");
     gotoxy(parametros->mario->y, (parametros->mario->x)+1);
@@ -414,19 +429,27 @@ void novo_jogo(PARAMETROS *parametros){
     if(num_objetos==ERRO)
         printf("Erro na leitura do arquivo, reinicie o programa");
     else
-        imprime_fase(parametros,num_objetos);
+        imprime_fase_nova(parametros,num_objetos);
 }
 
 void jogo(PARAMETROS *parametros){
 
     int condition = 0;
-    while(condition != PAUSE && condition != VITORIA)
+    clock_t tempo_inicial;
+    char c;
+    while(condition != PAUSE && condition != VITORIA && condition != 25)
     {
-        condition = move_mario(parametros);
+
+        if(kbhit())
+                condition = move_mario(parametros);
+
         switch(condition)
         {
             case DERROTA: if(parametros->vidas == 0)
+                          {
                             derrota(parametros);
+                            condition = 25;
+                          }
                           else
                           {
                             (parametros->vidas)--;
@@ -480,11 +503,16 @@ void derrota(PARAMETROS *parametros){
     printf("Pontuação final: %d / Pontuação máxima: %d", parametros->score_atual, parametros->score_max);
     gotoxy(7, 17);
     printf("Pressione ESC para retornar ao menu. . .");
-    if(getch()==ESC)
+    do
     {
-        controle_menu(parametros);
-        Beep(500, 40);
-    }
+        if(kbhit());
+        c = getch();
+            if(c==ESC)
+            {
+                Beep(500, 40);
+                controle_menu(parametros);
+            }
+        }while(c!=ESC);
 }
 
 void imprime_instrucoes(){
@@ -526,45 +554,304 @@ int move_mario(PARAMETROS *parametros){
 
     text_color(LIGHT_RED);
     char key;
-    while(key!=ESC && key!= 'P'){  // Se uma dessas teclas for pressionada
-    Sleep(DELAY); // Delay
-    if (kbhit())
-    {
-        key = toupper(getch());
+    int i,j, bloquear=0, rampa_direita=0, rampa_esquerda=0, escada_meio=0, escada_topo=0, cair=0; // USAR CADA VARIÁVEL PRO SWITCH
+    key = toupper(getch());
         switch(key)
-        {
-        case 'A': apaga_mario(parametros);
-                  (parametros->mario->y)--;
-                  posiciona_mario(parametros);
+        { // OBS: FAZER FUNCOES SEPARADAS PRA CHECAR CADA COISA E RETORNAR UM CERTO VALOR E FAZER SWITCH CASE DENTRO DESTE SWITCH CASE OU DEIXA VÁRIOS IFS E ELSES PRA N REPETIR
+        case 'A':
+                  for(i=0;i<parametros->indices->i_superficie;i++){ // Checa superfícies
+                     if(parametros->mario->y-3 == parametros->superficie[i].y
+                      && parametros->mario->x == parametros->superficie[i].x){
+                        bloquear = 1;
+                        i=parametros->indices->i_superficie;}
+                     else if((parametros->mario->y-3 == parametros->superficie[i].y // Vê se vai cair
+                          ||  parametros->mario->y-2 == parametros->superficie[i].y
+                          ||  parametros->mario->y-1 == parametros->superficie[i].y)
+                          &&  parametros->mario->x+2 == parametros->superficie[i].x)
+                        {cair = 0;
+                        i=parametros->indices->i_superficie;}
+                          else
+                        cair = 1;
+
+
+                  }
+
+
+
+                  for(i=0;i<parametros->indices->i_escada_meio;i++) // Checa escada e se tem superfície em baixo
+                    if((parametros->mario->y == parametros->escada_meio[i].y
+                    && (parametros->mario->x == parametros->escada_meio[i].x
+                    || parametros->mario->x-1== parametros->escada_meio[i].x))){
+                        for(j=0;j<parametros->indices->i_superficie;j++){
+                            if(parametros->mario->x+2 == parametros->superficie[j].x
+                            && parametros->mario->y == parametros->superficie[j].y){
+                                 bloquear = 0;
+                                 j=parametros->indices->i_superficie;
+                                 i=parametros->indices->i_escada_meio;
+                            }
+                            else{
+                                 bloquear = 1;
+                            }
+
+                        }
+                    }
+
+                 for(i=0;i<parametros->indices->i_escada_topo;i++){ // Checa escada topo pra n mover subindo
+                    if(parametros->mario->y == parametros->escada_topo[i].y
+                    &&(parametros->mario->x == parametros->escada_topo[i].x
+                    || parametros->mario->x-1==parametros->escada_topo[i].x
+                    || parametros->mario->x+1==parametros->escada_topo[i].x)){
+                        bloquear = 1;
+                        i=parametros->indices->i_escada_topo;}
+                    else if((parametros->mario->y-3 == parametros->escada_topo[i].y // Se ele tiver escada não cai(complemento da checagem de superfície)
+                          || parametros->mario->y-2 == parametros->escada_topo[i].y
+                          || parametros->mario->y-1 == parametros->escada_topo[i].y)
+                          && parametros->mario->x+2 == parametros->escada_topo[i].x)
+                        {cair = 0;
+                        i=parametros->indices->i_escada_topo;}
+                }
+
+                  for(i=0;i<parametros->indices->i_rampa_esquerda;i++) // Checa rampa à esquerda
+                    if((parametros->mario->y-6 == parametros->rampa_esquerda[i].y
+                      && parametros->mario->x == parametros->rampa_esquerda[i].x)
+                      || (parametros->mario->y-3 == parametros->rampa_esquerda[i].y
+                      && parametros->mario->x+1 == parametros->rampa_esquerda[i].x)){
+                        rampa_esquerda = 1;
+                        i=parametros->indices->i_rampa_esquerda;}
+
+                  for(i=0;i<parametros->indices->i_rampa_direita;i++){ // Checa rampa direita
+                    if((parametros->mario->y-3 == parametros->rampa_direita[i].y
+                      && parametros->mario->x+2 == parametros->rampa_direita[i].x)
+                      || (parametros->mario->y == parametros->rampa_direita[i].y
+                      && parametros->mario->x+1 == parametros->rampa_direita[i].x)){
+                        rampa_direita = 1;
+                        i=parametros->indices->i_rampa_direita;}
+                    else if((parametros->mario->y-6 == parametros->rampa_direita[i].y
+                          || parametros->mario->y-5 == parametros->rampa_direita[i].y
+                          || parametros->mario->y-4 == parametros->rampa_direita[i].y)
+                          && parametros->mario->x+2 == parametros->rampa_direita[i].x)
+                            cair = 0;
+                  }
+
+             if(rampa_direita || rampa_esquerda) // Se tiver rampas pra descer, não cai
+                {
+                    cair = 0;
+                    bloquear = 0;
+                }
+
+                if(!bloquear && !rampa_direita && !rampa_esquerda && !cair) // Se "não bloquear" e "não rampa"
+                {
+                    apaga_mario(parametros);
+                    (parametros->mario->y)--;
+                    posiciona_mario(parametros);
+                }
+                else if(rampa_esquerda)
+                     {
+                          apaga_mario(parametros);
+                          (parametros->mario->y)-=3;
+                          (parametros->mario->x)--;
+                          posiciona_mario(parametros);
+                     }
+                       else if(rampa_direita)
+                            {
+                                apaga_mario(parametros);
+                                (parametros->mario->y)-=3;
+                                (parametros->mario->x)++;
+                                posiciona_mario(parametros);
+
+                            }
+
                   break;
 
-        case 'D': apaga_mario(parametros);
-                  (parametros->mario->y)++;
-                  posiciona_mario(parametros);
+        case 'D': for(i=0;i<parametros->indices->i_superficie;i++){
+                    if(parametros->mario->y+3 == parametros->superficie[i].y // Checa superficies
+                      && parametros->mario->x == parametros->superficie[i].x)
+                        bloquear = 1;
+                    else  if((parametros->mario->y+3 == parametros->superficie[i].y // Vê se vai cair
+                          ||  parametros->mario->y+2 == parametros->superficie[i].y
+                          ||  parametros->mario->y+1 == parametros->superficie[i].y)
+                          &&  parametros->mario->x+2 == parametros->superficie[i].x)
+                        {cair = 0;
+                        i=parametros->indices->i_superficie;}
+                          else
+                        cair = 1;
+                   }
+
+                  for(i=0;i<parametros->indices->i_escada_meio;i++) // Checa escada e se tem superfície em baixo
+                    if((parametros->mario->y == parametros->escada_meio[i].y
+                    && (parametros->mario->x == parametros->escada_meio[i].x
+                    || parametros->mario->x-1== parametros->escada_meio[i].x))){
+                        for(j=0;j<parametros->indices->i_superficie;j++){
+                            if(parametros->mario->x+2 == parametros->superficie[j].x
+                            && parametros->mario->y == parametros->superficie[j].y){
+                                 bloquear = 0;
+                                 j=parametros->indices->i_superficie;
+                                 i=parametros->indices->i_escada_meio;
+                            }
+                            else{
+                                 bloquear = 1;
+
+                            }
+
+                        }
+                    }
+
+                  for(i=0;i<parametros->indices->i_escada_topo;i++){ // Checa escada topo
+                    if((parametros->mario->y == parametros->escada_topo[i].y
+                    && (parametros->mario->x == parametros->escada_topo[i].x
+                    || parametros->mario->x-1== parametros->escada_topo[i].x
+                    || parametros->mario->x+1== parametros->escada_topo[i].x))){
+                        bloquear = 1;
+                        i=parametros->indices->i_escada_topo;}
+                    else if((parametros->mario->y+3 == parametros->escada_topo[i].y // Se ele tiver escada não cai(complemento da checagem de superfície)
+                          || parametros->mario->y+2 == parametros->escada_topo[i].y
+                          || parametros->mario->y+1 == parametros->escada_topo[i].y)
+                          && parametros->mario->x+2 == parametros->escada_topo[i].x)
+                        {cair = 0;
+                        i=parametros->indices->i_escada_topo;}
+
+                     }
+
+                  for(i=0;i<parametros->indices->i_rampa_esquerda;i++){ // Checa rampa esquerda
+                    if((parametros->mario->y == parametros->rampa_esquerda[i].y
+                    &&  parametros->mario->x+2==parametros->rampa_esquerda[i].x)
+                    ||  (parametros->mario->y-3==parametros->rampa_esquerda[i].y
+                    &&  parametros->mario->x+1==parametros->rampa_esquerda[i].x)){
+                        rampa_esquerda = 1;
+                        i=parametros->indices->i_rampa_esquerda;}
+                    else if((parametros->mario->y+3 == parametros->rampa_esquerda[i].y
+                          || parametros->mario->y+2 == parametros->rampa_esquerda[i].y
+                          || parametros->mario->y+1 == parametros->rampa_esquerda[i].y)
+                          && parametros->mario->x+2 == parametros->rampa_esquerda[i].x)
+                            cair = 0;
+
+                    }
+
+                  for(i=0;i<parametros->indices->i_rampa_direita;i++) // Checa rampa direita
+                    if((parametros->mario->y+3 == parametros->rampa_direita[i].y
+                      && parametros->mario->x == parametros->rampa_direita[i].x)
+                      || (parametros->mario->y == parametros->rampa_direita[i].y
+                      && parametros->mario->x+1 == parametros->rampa_direita[i].x)){
+                        rampa_direita = 1;
+                        i=parametros->indices->i_rampa_direita;}
+
+
+                if(rampa_direita || rampa_esquerda)
+                {
+                    cair = 0;
+                    bloquear = 0;
+                }
+
+                if(!bloquear && !rampa_direita && !rampa_esquerda && !cair) // Se "não bloquear" e "não rampa"
+                {
+                    apaga_mario(parametros);
+                    (parametros->mario->y)++;
+                    posiciona_mario(parametros);
+                }
+                else if(rampa_esquerda)
+                     {
+                          apaga_mario(parametros);
+                          (parametros->mario->y)+=3;
+                          (parametros->mario->x)++;
+                          posiciona_mario(parametros);
+                     }
+                       else if(rampa_direita)
+                            {
+                                apaga_mario(parametros);
+                                (parametros->mario->y)+=3;
+                                (parametros->mario->x)--;
+                                posiciona_mario(parametros);
+
+                            }
+
                   break;
 
-        case 'W': apaga_mario(parametros);
-                  (parametros->mario->x)--;
-                  posiciona_mario(parametros);
+        case 'W': for(i=0;i<parametros->indices->i_escada_meio;i++) // Checa escadas ok
+                    if(parametros->mario->y == parametros->escada_meio[i].y
+                    && (parametros->mario->x == parametros->escada_meio[i].x
+                    || parametros->mario->x-1== parametros->escada_meio[i].x)){
+                        bloquear = 0;
+                        i=parametros->indices->i_escada_meio;}
+                    else{
+                        bloquear = 1;
+                        for(j=0;j<parametros->indices->i_escada_topo;j++) // Caso não esteja numa escada ok, checa escada topo
+                            if((parametros->mario->y == parametros->escada_topo[i].y)
+                            && (parametros->mario->x == parametros->escada_topo[i].x
+                            || parametros->mario->x-1== parametros->escada_topo[i].x
+                            || parametros->mario->x+1== parametros->escada_topo[i].x)){
+                                bloquear = 0;
+                                i=parametros->indices->i_escada_meio;
+                                j=parametros->indices->i_escada_topo;}
+                    }
+
+                  if(!bloquear)
+                  {
+                    apaga_mario(parametros);
+                    (parametros->mario->x)--;
+                    posiciona_mario(parametros);
+
+                  }
                   break;
 
-        case 'S': apaga_mario(parametros);
-                  (parametros->mario->x)++;
-                  posiciona_mario(parametros);
+        case 'S': for(i=0;i<parametros->indices->i_escada_meio;i++) // Checa escadas ok
+                    if(parametros->mario->y == parametros->escada_meio[i].y
+                    && (parametros->mario->x == parametros->escada_meio[i].x
+                    || parametros->mario->x+1== parametros->escada_meio[i].x)){
+                        bloquear = 0;
+                        i=parametros->indices->i_escada_meio;}
+                    else{
+                        bloquear = 1;
+                        for(j=0;j<parametros->indices->i_escada_topo;j++) // Caso não esteja numa escada ok, checa escada topo
+                            if((parametros->mario->y == parametros->escada_topo[i].y)
+                            && (parametros->mario->x == parametros->escada_topo[i].x
+                            || parametros->mario->x-1== parametros->escada_topo[i].x
+                            || parametros->mario->x+1== parametros->escada_topo[i].x
+                            || parametros->mario->x+2== parametros->escada_topo[i].x)){
+                                bloquear = 0;
+                                i=parametros->indices->i_escada_meio;
+                                j=parametros->indices->i_escada_topo;}
+                    }
+
+
+
+                  for(i=0;i<parametros->indices->i_superficie;i++) // Checa superfícies em baixo ( da pra juntar em um if dps? )
+                    if((parametros->mario->y == parametros->superficie[i].y
+                    ||  parametros->mario->y-1==parametros->superficie[i].y
+                    ||  parametros->mario->y-2==parametros->superficie[i].y)
+                    &&  parametros->mario->x+2==parametros->superficie[i].x){
+                        bloquear = 1;
+                        i=parametros->indices->i_superficie;
+                    }
+
+
+                  if(!bloquear)
+                  {
+                      apaga_mario(parametros);
+                      (parametros->mario->x)++;
+                      posiciona_mario(parametros);
+                  }
+
                   break;
 
-// case SPACEBAR:
+      //case SPACEBAR:
         }
 
-   }
+
 
     if(parametros->mario->x == parametros->donkey->x && parametros->mario->y == (parametros->donkey->y)+2)
         return DERROTA;
     else if(parametros->mario->x == (parametros->princesa->x) && parametros->mario->y == (parametros->princesa->y)-2)
         return VITORIA;
          //else if(coisa do barril)
-   }
-   return PAUSE;
+    if(key == ESC)
+        return PAUSE;
+}
+
+void cor_escadas(int a){
+ if (a==1)
+    text_color(GRAY);
+ else
+    text_color(RED);
 }
 
 void imprime_mario(TIPO_FASE mario){
@@ -584,6 +871,7 @@ void imprime_donk1(TIPO_FASE donk){
     for (i=0;i<Y_PDR;i++){
             gotoxy((donk.coluna_inicial)*3,(donk.linha_inicial)*2+i);
         for (j=0;j<X_PDR;j++){
+            text_color(YELLOW);
             printf("%c", D[i][j]);
         }
     }
@@ -595,6 +883,7 @@ void imprime_donk2(TIPO_FASE donk){
     for (i=0;i<Y_PDR;i++){
             gotoxy(donk.coluna_inicial,donk.linha_inicial+i);
         for (j=0;j<X_PDR;j++){
+            text_color(YELLOW);
             printf("%c", D[i][j]);
         }
     }
@@ -606,80 +895,87 @@ void imprime_princesa(TIPO_FASE prin){
     for (i=0;i<Y_PDR;i++){
             gotoxy((prin.coluna_inicial)*3,(prin.linha_inicial)*2+i);
         for (j=0;j<X_PDR;j++){
+            text_color(LIGHT_PURPLE);
             printf("%c", P[i][j]);
         }
     }
 }
 
 void imprime_superficie(TIPO_FASE superficie){
-  char S[Y_PDR][X_PDR]={{'X','X','X'},{'X','X','X'}};
+    char S[Y_PDR][X_PDR]={{'X','X','X'},{'X','X','X'}};
     int i,j;
     for (i=0;i<Y_PDR;i++){
             gotoxy((superficie.coluna_inicial)*3,((superficie.linha_inicial)*2+i));
         for (j=0;j<X_PDR;j++){
+           text_color(LIGHT_RED);
            printf("%c", S[i][j]);
         }
     }
 }
 
 void imprime_escFIM(TIPO_FASE escfim){
-  char H[Y_PDR][X_PDR]={{'|','X','|'},{'|','-','|'}};
+    char H[Y_PDR][X_PDR]={{'|','X','|'},{'|','-','|'}};
     int i,j;
     for (i=0;i<Y_PDR;i++){
             gotoxy((escfim.coluna_inicial)*3,((escfim.linha_inicial)*2+i));
         for (j=0;j<X_PDR;j++){
-           printf("%c", H[i][j]);
+         cor_escadas(j);
+         printf("%c", H[i][j]);
         }
     }
 }
 
 void imprime_escOK(TIPO_FASE escboa){
- char E[Y_PDR][X_PDR]={{'|','-','|'},{'|','-','|'}};
+    char E[Y_PDR][X_PDR]={{'|','-','|'},{'|','-','|'}};
     int i,j;
     for (i=0;i<Y_PDR;i++){
             gotoxy((escboa.coluna_inicial)*3,((escboa.linha_inicial)*2+i));
         for (j=0;j<X_PDR;j++){
+            cor_escadas(j);
            printf("%c", E[i][j]);
         }
     }
 }
 
 void imprime_escQ(TIPO_FASE escquebrada){
- char E[Y_PDR][X_PDR]={{'|','-','|'},{' ','-','|'}};
+
+    char Q[Y_PDR][X_PDR]={{'|','-','|'},{' ','-','|'}};
     int i,j;
     for (i=0;i<Y_PDR;i++){
             gotoxy((escquebrada.coluna_inicial)*3,((escquebrada.linha_inicial)*2+i));
         for (j=0;j<X_PDR;j++){
-           printf("%c", E[i][j]);
+        cor_escadas(j);
+         printf("%c", Q[i][j]);
         }
     }
 }
 
-void imprime_barrile(TIPO_FASE barrilparado){
- char B1[Y_PDR][X_PDR]={{'/','^','\\'},{'\\','Z','/'}};
+void imprime_barril_e(TIPO_FASE barrilparado){
+    char B1[Y_PDR][X_PDR]={{'/','^','\\'},{'\\','Z','/'}};
     int i,j;
     for (i=0;i<Y_PDR;i++){
             gotoxy((barrilparado.coluna_inicial)*3,((barrilparado.linha_inicial)*2+i));
-        for (j=0;j<3;j++){
+        for (j=0;j<X_PDR;j++){
+           text_color(GRAY);
            printf("%c", B1[i][j]);
         }
     }
 }
 
 void imprime_barril_m(TIPO_FASE barrilmovel){
- char B2[Y_PDR][X_PDR]={{'/','^','\\'},{'\\',' ','/'}};
+    char B2[Y_PDR][X_PDR]={{'/','^','\\'},{'\\',' ','/'}};
     int i,j;
     for (i=0;i<Y_PDR;i++){
             gotoxy((barrilmovel.coluna_inicial)*3,((barrilmovel.linha_inicial)*2+i));
         for (j=0;j<X_PDR;j++){
+           text_color(GRAY);
            printf("%c", B2[i][j]);
         }
     }
 }
 
 void imprime_rampadir(TIPO_FASE rdireita){
-
- char RD[Y_PDR][X_PDR*2]={{' ',' ',' ','_','.','-'},{'_','.','-',' ',' ',' '}};
+    char RD[Y_PDR][X_PDR*2]={{' ',' ',' ','_','.','-'},{'_','.','-',' ',' ',' '}};
     int i,j;
     for (i=0;i<Y_PDR;i++){
             gotoxy((rdireita.coluna_inicial)*3,((rdireita.linha_inicial)*2+i));
@@ -688,9 +984,9 @@ void imprime_rampadir(TIPO_FASE rdireita){
         }
     }
 }
-void imprime_rampaesq(TIPO_FASE resquerda){
 
- char RD[Y_PDR][X_PDR*2]={{'-','.','_',' ',' ',' '},{' ',' ',' ','-','.','_'}};
+void imprime_rampaesq(TIPO_FASE resquerda){
+    char RD[Y_PDR][X_PDR*2]={{'-','.','_',' ',' ',' '},{' ',' ',' ','-','.','_'}};
     int i,j;
     for (i=0;i<Y_PDR;i++){
             gotoxy((resquerda.coluna_inicial)*3,((resquerda.linha_inicial)*2+i));
@@ -699,9 +995,9 @@ void imprime_rampaesq(TIPO_FASE resquerda){
         }
     }
 }
-void imprime_fase(PARAMETROS *parametros, int qtd_objetos){ // CHECAR ESSA CONVERSAO
-    int i, j=0;
-    text_color(AQUA);
+
+void imprime_fase_nova(PARAMETROS *parametros, int qtd_objetos){
+    int i;
     for (i=0;i<qtd_objetos;i++)
     {
         switch(parametros->vetor_objetos[i].tipo)
@@ -750,41 +1046,66 @@ void imprime_fase(PARAMETROS *parametros, int qtd_objetos){ // CHECAR ESSA CONVE
                       parametros->escada_topo[parametros->indices->i_escada_topo].y = (parametros->vetor_objetos[i].coluna_inicial)*3;
                       (parametros->indices->i_escada_topo)++;
                       break;
-            case 'B':if((parametros->vetor_objetos[i].velocidade)>0)  // barril que se mexe
-                    {
+            case 'B': if((parametros->vetor_objetos[i].velocidade)>0)  // barril que se mexe
+                      {
                         imprime_barril_m(parametros->vetor_objetos[i]);
                         parametros->barril_m[parametros->indices->i_barril_m].x = (parametros->vetor_objetos[i].linha_inicial)*2;
                         parametros->barril_m[parametros->indices->i_barril_m].y = (parametros->vetor_objetos[i].coluna_inicial)*3;
                         (parametros->indices->i_barril_m)++;
-                    }
-                     else
-                     {
-                        imprime_barrile(parametros->vetor_objetos[i]);  // barril estático
+                      }
+                      else
+                      {
+                        imprime_barril_e(parametros->vetor_objetos[i]);  // barril estático
                         parametros->barril_e[parametros->indices->i_barril_e].x = (parametros->vetor_objetos[i].linha_inicial)*2;
                         parametros->barril_e[parametros->indices->i_barril_e].y = (parametros->vetor_objetos[i].coluna_inicial)*3;
                         (parametros->indices->i_barril_e)++;
-                     }
+                      }
                      break;
         }
     }
     gotoxy(0,-2);
     printf("VIDAS %d \n", parametros->vidas);
     printf("SCORE ATUAL/MAX: %d / %d",parametros->score_atual, parametros->score_max);
-
-
-   /* Teste indices
-    printf("%d\n", parametros->indices->i_escada_topo);
-    printf("%d\n", parametros->indices->i_escada_meio);
-    printf("%d\n", parametros->indices->i_escada_quebrada);
-    printf("%d\n", parametros->indices->i_barril_e);
-    printf("%d\n", parametros->indices->i_barril_m);
-    printf("%d\n", parametros->indices->i_superficie);
-    printf("%d\n", parametros->indices->i_rampa_direita);
-    printf("%d", parametros->indices->i_rampa_esquerda);
-    system("pause");*/
 }
 
+void imprime_fase(PARAMETROS *parametros, int qtd_objetos){
+    parametros->mario->x = parametros->inc_mario->linha_inicial;
+    parametros->mario->y = parametros->inc_mario->coluna_inicial;
+    int i;
+    for (i=0;i<qtd_objetos;i++)
+    {
+        switch(parametros->vetor_objetos[i].tipo)
+        {
+            case 'M': imprime_mario(parametros->vetor_objetos[i]);
+                      break;
+            case 'P': imprime_princesa(parametros->vetor_objetos[i]);
+                      break;
+            case 'K': imprime_donk1(parametros->vetor_objetos[i]);
+                      break;
+            case 'G': imprime_rampaesq(parametros->vetor_objetos[i]);
+                      break;
+            case 'F': imprime_rampadir(parametros->vetor_objetos[i]);
+                      break;
+            case 'S': imprime_superficie(parametros->vetor_objetos[i]);
+                      break;
+            case 'Q': imprime_escQ(parametros->vetor_objetos[i]);
+                      break;
+            case 'E': imprime_escOK(parametros->vetor_objetos[i]);
+                      break;
+            case 'H': imprime_escFIM(parametros->vetor_objetos[i]);
+                      break;
+            case 'B': if((parametros->vetor_objetos[i].velocidade)>0)  // barril que se mexe
+                        imprime_barril_m(parametros->vetor_objetos[i]);
+                      else
+                        imprime_barril_e(parametros->vetor_objetos[i]);  // barril estático
 
+                     break;
+        }
+    }
+    gotoxy(0,-2);
+    printf("VIDAS %d \n", parametros->vidas);
+    printf("SCORE ATUAL/MAX: %d / %d",parametros->score_atual, parametros->score_max);
+}
 /* ############ CHANGELOG ############
     ############ Legenda: ###########
          '-' : Mudança
@@ -829,4 +1150,14 @@ Pedro, 20/06
     - Criação de variáveis CONTROLE e uma variável INDICES dentro da struct PARAMETROS
         -> Talvez seja melhor fazer um vetor de 8 posições e defines tipo IND_BARRIL_M 0 e adicionar 1 cada vez que encontrar
 
+
+Pedro, 22/06
+    - Cores nas funções de imprimir objetos
+    - Mudança da função formata_prompt() que estava mudando a cor
+    - Início das limitações de movimentação:
+        -> Coisa pra caralho que talvez vire coisas separadas pra organizar melhor
+
+
+
+    Criar defines ESQUERDA e DIREITA; direcao = DIREITA => Se o próximo tipo ao lado for superfície/limite do mapa, direcao = ESQUERDA
 */
