@@ -178,7 +178,6 @@ int setas(); // setas OK
 CONTROLE testa_queda(CONTROLE , int *, int *,int*,char*);
 void restaura_espelho_escada(CONTROLE *,int, int);
 void apaga_espelho(CONTROLE *,int ,int );
-
 CONTROLE testa_cima(CONTROLE , int *, int *,int*,char*);
 CONTROLE testa_direita(CONTROLE , int *, int *,int*,char*);
 CONTROLE testa_esquerda(CONTROLE , int *, int *,int*,char*);
@@ -207,7 +206,7 @@ JOGO novo_jogo(TIPO_FASE[],int); //a fazer
 void jogo(JOGO);
 CONTROLE mapeia_fase(JOGO*, int);
 int tempo(clock_t);
-int testa_morte_queda(int,int);
+int testa_morte_queda(int,int,JOGO);
 //void carrega_jogo () a fazer
 //void carrega_mapa;
 int testa_vit_ou_der(CONTROLE, int, int,char);
@@ -399,12 +398,12 @@ void jogo(JOGO copia_controle){ //ok
                 copia_controle.mario.coluna_inicial=coord_x;
                 copia_controle.mario.linha_inicial=coord_y;
         }
-       if (kbhit()){
+       else if (kbhit()){
         key=getch();
         condition=move_mario(&copia_controle,key);
        }
-       else
-       condition=testa_morte_queda(coord_y,condition);
+        condition=testa_morte_queda(coord_y,condition,copia_controle);
+
        switch(condition)
    {
 
@@ -415,7 +414,6 @@ void jogo(JOGO copia_controle){ //ok
                             }
                           else
                             {
-                                printf("lalala")
 ;                            gotoxy(0,0);
                             vidas--;
                            // copia_controle_jogo.vidas=vidas;
@@ -441,10 +439,17 @@ void jogo(JOGO copia_controle){ //ok
      }
 }
 
-int testa_morte_queda(int y,int condition){
+int testa_morte_queda(int y,int condition, JOGO teste){
      gotoxy(0,6);
      printf("%d" ,y );
-    if (y==44){
+    if (y==44
+        || teste.espelho_fixo.controle[teste.mario.linha_inicial+Y_PDR][teste.mario.coluna_inicial]== 'K'
+        || teste.espelho_fixo.controle[teste.mario.linha_inicial+Y_PDR][teste.mario.coluna_inicial+1]== 'K'
+        || teste.espelho_fixo.controle[teste.mario.linha_inicial+Y_PDR][teste.mario.coluna_inicial+2]== 'K'
+        || teste.espelho_fixo.controle[teste.mario.linha_inicial+Y_PDR][teste.mario.coluna_inicial]== 'B'
+        || teste.espelho_fixo.controle[teste.mario.linha_inicial+Y_PDR][teste.mario.coluna_inicial+1]== 'B'
+        || teste.espelho_fixo.controle[teste.mario.linha_inicial+Y_PDR][teste.mario.coluna_inicial+2]== 'B')
+        {
         return DERROTA;
     }
      else return condition;
@@ -643,7 +648,6 @@ int testa_vit_ou_der(CONTROLE posicao, int x, int y,char teste){
     else return JOGANDO;
 }
 
-
 CONTROLE testa_esquerda(CONTROLE posicao, int *x, int *y,int *flag,char *restaura){
 
     int linha,coluna;
@@ -699,7 +703,6 @@ CONTROLE testa_esquerda(CONTROLE posicao, int *x, int *y,int *flag,char *restaur
         }
     else {
         gotoxy(0,10);
-        printf("vivo");
         resultado[0]=testa_vit_ou_der(posicao,(coluna-1),linha,'B');
         resultado[1]=testa_vit_ou_der(posicao,(coluna-1),linha,'K');
         resultado[2]=testa_vit_ou_der(posicao,(coluna-1),linha,'P');
@@ -746,7 +749,6 @@ int move_mario(JOGO *parametros, char key){
             case 'A':interno=testa_esquerda(interno,&coord_x,&coord_y,&eh_valido,&restaura_mapa);
                         gotoxy(0,1);
                         printf("valor da flag %d",eh_valido);
-                        system("pause");
                         gotoxy(0,0);
                         switch(eh_valido){
                         case 1:printf("É válido");
@@ -764,46 +766,54 @@ int move_mario(JOGO *parametros, char key){
                        break;
 
             case 'D':interno=testa_direita(interno,&coord_x,&coord_y,&eh_valido,&restaura_mapa);
-
-                        if(eh_valido){
-                        printf("É válido");
-                        apaga_mario((parametros->mario.coluna_inicial),(parametros->mario.linha_inicial));
-                        posiciona_mario(coord_x,coord_y);
-                        parametros->mario.coluna_inicial=coord_x;
-                        parametros->mario.linha_inicial=coord_y;
+                        switch(eh_valido){
+                        case 1: printf("É válido");
+                                apaga_mario((parametros->mario.coluna_inicial),(parametros->mario.linha_inicial));
+                                posiciona_mario(coord_x,coord_y);
+                                parametros->mario.coluna_inicial=coord_x;
+                                parametros->mario.linha_inicial=coord_y;
+                                break;
+                        case -1:printf("Não é  válido");
+                                return DERROTA;
+                                break;
+                         case VITORIA: return VITORIA;
+                            break;
                         }
-                        else if (eh_valido==-1){return DERROTA;
-                                printf("Não é  válido");
-                        }
-                        else if (eh_valido==VITORIA)return VITORIA;
                        break;
 
             case 'W':   interno=testa_cima(interno,&coord_x,&coord_y,&eh_valido,&restaura_mapa);
+                        switch(eh_valido){
+                        case 1: gotoxy(0,0);
+                                printf("É válido");
+                                apaga_mario((parametros->mario.coluna_inicial),(parametros->mario.linha_inicial));
+                                posiciona_mario(coord_x,coord_y);
+                                parametros->mario.coluna_inicial=coord_x;
+                                parametros->mario.linha_inicial=coord_y;
+                                break;
+                        case -1:printf("Não é  válido");
+                                return DERROTA;
+                                break;
+                         case VITORIA: return VITORIA;
+                            break;
+                        }
                         gotoxy(0,0);
-                        if(eh_valido){
-                        apaga_mario((parametros->mario.coluna_inicial),(parametros->mario.linha_inicial));
-                        posiciona_mario(coord_x,coord_y);
-                        parametros->mario.coluna_inicial=coord_x;
-                        parametros->mario.linha_inicial=coord_y;
-                        }
-                        else if (eh_valido==-1){return DERROTA;
-                                printf("Não é  válido");
-                        }
-                        else if (eh_valido==VITORIA)return VITORIA;
                       break;
 
-            case 'S':  interno=testa_baixo(interno,&coord_x,&coord_y,&eh_valido,&restaura_mapa);
+            case 'S':   switch(eh_valido){
+                        case 1: printf("É válido");
+                                 apaga_mario((parametros->mario.coluna_inicial),(parametros->mario.linha_inicial));
+                                posiciona_mario(coord_x,coord_y);
+                                parametros->mario.coluna_inicial=coord_x;
+                                parametros->mario.linha_inicial=coord_y;
+                                break;
+                        case -1:printf("Não é  válido");
+                                return DERROTA;
+                                break;
+                         case VITORIA: return VITORIA;
+
+                        interno=testa_baixo(interno,&coord_x,&coord_y,&eh_valido,&restaura_mapa);
                         gotoxy(0,0);
-                        if(eh_valido){
-                        apaga_mario((parametros->mario.coluna_inicial),(parametros->mario.linha_inicial));
-                        posiciona_mario(coord_x,coord_y);
-                        parametros->mario.coluna_inicial=coord_x;
-                        parametros->mario.linha_inicial=coord_y;
-                        }
-                        else if (eh_valido==-1){return DERROTA;
-                                printf("Não é  válido");
-                        }
-                        else if (eh_valido==VITORIA)return VITORIA;
+            }
                       break;
             case  'P': return PAUSE;
     // case SPACEBAR:
@@ -879,10 +889,6 @@ void derrota(JOGO *parametros){
     //}
 }
 
-
-
-//-------------------------------------------------------------//
-
 void hide_cursor() // Esconde o cursor default do prompt
 {
     HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE); // Esconde o Cursor do console
@@ -891,11 +897,6 @@ void hide_cursor() // Esconde o cursor default do prompt
     info.bVisible = FALSE;
     SetConsoleCursorInfo(consoleHandle, &info);
 }
-
-//-------------------------------------------------------------//
-
-
-//-------------------------------------------------------------//
 
 void text_color(int ForgC) // Função para colorir o texto
 {
@@ -910,17 +911,11 @@ void text_color(int ForgC) // Função para colorir o texto
     return;
 }
 
-
-//-------------------------------------------------------------//
-
-void gotoxy (int x, int y)
-{
+void gotoxy (int x, int y){
  COORD coord = {0, 0};
  coord.X =x; coord.Y = y+2; // X and Y coordinates
  SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 }
-
-//-------------------------------------------------------------//
 
 int setas()  // Controle pelas setas direcionais
 {
@@ -938,11 +933,6 @@ int setas()  // Controle pelas setas direcionais
 
     return valor_seta; // Manda para o main a seta lida
 }
-
-//-------------------------------------------------------------//
-
-
-//######################7-AREA DE DESENVOLVIMENTO############################//
 
 void imprime_instrucoes(){
     system("cls");
@@ -963,6 +953,7 @@ void imprime_instrucoes(){
     }
     imprime_tela_incial();
 }
+
 void imprime_tela_incial(){
     system("cls");
     int c;
@@ -976,8 +967,6 @@ void imprime_tela_incial(){
     }
 }
 
-//-------------------------------------------------------------//
-
 void imprime_mario(TIPO_FASE mario){  // observação, não sei se não é melhor fazer como tu tava fazendo
     char M[Y_PDR][X_PDR]={{'\\','ô','/'},{'/','H','\\'}};
     int i,j;
@@ -989,8 +978,7 @@ void imprime_mario(TIPO_FASE mario){  // observação, não sei se não é melho
     }
 }
 
-void imprime_donk1(TIPO_FASE donk)
-{
+void imprime_donk1(TIPO_FASE donk){
     char D[Y_PDR][X_PDR]={{'}','ô','{'},{'_','H','_'}};
     int i,j;
     for (i=0;i<Y_PDR;i++){
@@ -1002,8 +990,7 @@ void imprime_donk1(TIPO_FASE donk)
     }
 }
 
-void imprime_donk2(TIPO_FASE donk)
-{
+void imprime_donk2(TIPO_FASE donk){
   char D[Y_PDR][X_PDR]={{'\\','o','/'},{'/',' ','\\'}};
     int i,j;
     for (i=0;i<Y_PDR;i++){
@@ -1015,8 +1002,7 @@ void imprime_donk2(TIPO_FASE donk)
     }
 }
 
-void imprime_princesa(TIPO_FASE prin)
-{
+void imprime_princesa(TIPO_FASE prin){
   //  '\o/'
   //  '/=\'
 
@@ -1031,8 +1017,7 @@ void imprime_princesa(TIPO_FASE prin)
     }
 }
 
-void imprime_superficie(TIPO_FASE superficie)
-{
+void imprime_superficie(TIPO_FASE superficie){
   char S[Y_PDR][X_PDR]={{'X','X','X'},{'X','X','X'}};
     int i,j;
     for (i=0;i<Y_PDR;i++){
@@ -1044,8 +1029,7 @@ void imprime_superficie(TIPO_FASE superficie)
     }
 }
 
-void imprime_escFIM(TIPO_FASE escfim)
-{
+void imprime_escFIM(TIPO_FASE escfim){
   char H[Y_PDR][X_PDR]={{'|','X','|'},{'|','-','|'}};
     int i,j;
     for (i=0;i<Y_PDR;i++){
@@ -1136,7 +1120,6 @@ void cor_escadas(int a){
   text_color(RED);
     }
 }
-//-------------------------------------------------------------//
 
 void imprime_fase(TIPO_FASE vetor_objetos[], int  qtd_objetos,int vidas){
     int i;
@@ -1178,6 +1161,7 @@ void imprime_fase(TIPO_FASE vetor_objetos[], int  qtd_objetos,int vidas){
 
 //    printf("SCORE ATUAL/MAX: %d / %d",paraimpressao->score_atual, paraimpressao->score_max);
 }
+
 void preenche_espelho(CONTROLE *mapa,int x,int y, char obj){
     int i,j;
     if ( obj == 'F' ) {
@@ -1201,6 +1185,7 @@ void preenche_espelho(CONTROLE *mapa,int x,int y, char obj){
     }
 
 }
+
 CONTROLE mapeia_fase(JOGO *mapadojogo,int qtd_objetos){
     int i, x, y,i_linha,i_coluna;
     CONTROLE mapa;
@@ -1274,6 +1259,7 @@ CONTROLE mapeia_fase(JOGO *mapadojogo,int qtd_objetos){
 
     return mapa;
 }
+
 void ler_menu_pausa(){
     system("cls");
     Beep(500, 40);
@@ -1411,4 +1397,3 @@ Vitor, 22/06
         -> Podemos sim meter  as  cores nas coisas eheh, já fiz um pouco disso e  quanto ao posiciona mario no lugar  do imprime mario, até pode ser, so acho que fica um pouco mais chato
         pra colotir ele eheheh;
         */
-Vitor 22/06 : ajeitei mais ou menos tudo para ficar  do jeito que estava, já estou desenvolvendo alguma coisa para reemprimir a  escada quando o mario passsa por cima   
