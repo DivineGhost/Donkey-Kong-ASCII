@@ -53,19 +53,16 @@ Referência das cores da função textcolor()
 #include <locale.h>
 #include <windows.h>
 #include <time.h>
+#include <limits.h>
 
 //######################2-DEFINIÇÕES:############################//
 
 #define SCOREINC 1000  // Pontuação Inicial
 #define VIDAS 3        // Número de vidas inicial
-#define NUMMAXOBJ 460  // Tamanho máximo de objetos possíveis
+#define MAX_OBJ 460  // Tamanho máximo de objetos possíveis
 #define Y_MAX 48       // Y max do prompt e x max do prompt
 #define X_MAX 60
-// códigos internos
-#define ERRO -1
-#define NOVOJOGO 0
-#define CONTINUARJOGO 1
-#define SAIR 3
+
  // código  das teclas
 #define SPACEBAR 32
 #define CIMA 72
@@ -129,10 +126,10 @@ Referência das cores da função textcolor()
 #define VEL_BARRIL 50
 #define DEBUG
 
-#define PDIR +1
-#define PESQ -1
-#define PCIM -2
-#define PBAI +2
+#define PDIR 1
+#define PESQ 2
+#define PCIM 3
+#define PBAI 4
 //######################3-STRUCTS############################//
     //Define estrutura central do programa.
 
@@ -188,7 +185,7 @@ CONTROLE testa_baixo(CONTROLE , int *, int *,int*,char*);
 void vitoria(JOGO );          // Imprime uma tela de vitória OK
 void derrota(JOGO );          // Imprime uma tela de derrota OK
 void imprime_fase(TIPO_FASE[],int,int); //ok
-void imprime_tela_incial(); // ok
+void imprime_tela_inicial(); // ok
 void imprime_instrucoes(); //ok
 int move_mario(JOGO*,char);        // Move o mário A FAZER
 void apaga(int,int );      // Apaga a posição do márioOK
@@ -219,11 +216,12 @@ void gera_tipo_fase(CONTROLE ,int *,JOGO *);
 void cor_escadas(int);
 void prepara_barril(JOGO*);
 void joga_barril(JOGO*);
+void move_barril(JOGO*);
 //######################5-MAIN############################//
 
 int main()
 {
-    TIPO_FASE vetorobjetos[NUMMAXOBJ];  // inicializa vetor que irá receber os dados do fase.bin
+    TIPO_FASE vetorobjetos[MAX_OBJ];  // inicializa vetor que irá receber os dados do fase.bin
     JOGO controle_geral;  // inicialização do vetor de controle
     int controle;
     do
@@ -235,7 +233,7 @@ int main()
 
 int controle_jogo(JOGO controle_geral, TIPO_FASE vetorobjetos[]){ // função recursiva multipla, eu chomo um cara que chma outro e que me chma
     int controle,score_atual,score_max,indfor,num_objetos;//inicialização de variaveis de controle,score e indice do for de inicialização
-    for (indfor=0;indfor<NUMMAXOBJ;indfor++)//  garante que não há lixo no campo tipo do TIPO_FASE
+    for (indfor=0;indfor<MAX_OBJ;indfor++)//  garante que não há lixo no campo tipo do TIPO_FASE
         vetorobjetos[indfor].tipo='Z';
     formatprompt(); // seta tamanho e lingua
     num_objetos=ler_bin(vetorobjetos); // chama leitura do binário, função que retorna o número de objetos do binário
@@ -264,7 +262,7 @@ int mainMenu() // Menu principal do jogo
     int i;
     for (i=1;i<61;i++){printf("%d",i%10);};
     #endif // DEBUG*/
-    imprime_tela_incial();
+    imprime_tela_inicial();
 
     do // Faz ao menos uma vez
     {
@@ -418,6 +416,8 @@ void jogo(JOGO copia_controle){ //ok
         gotoxy(20,2);
         printf("%d", cont_tempo);
         cont_tempo++;
+        if(cont_tempo==INT_MAX) // Se chegar no máximo reseta o contador para não parar o jogo
+            cont_tempo=0;
         if (flag_pausa==1) {
             gotoxy(0,-1); // menos dois pois estamos sempre somando dois na função gotoxt para facilitar as impressões;
             printf("SCORE / SCORE MAX %d / %d", copia_controle.score_atual,copia_controle.score_max);
@@ -469,6 +469,8 @@ void jogo(JOGO copia_controle){ //ok
                          flag_pausa=1;
                           break;
         }
+        if(cont_tempo%500==0)
+            move_barril(&copia_controle);
      }
 }
 
@@ -600,7 +602,8 @@ CONTROLE testa_direita(CONTROLE posicao, int *x, int *y, int *flag,char *restaur
     || posicao.controle[linha+2][coluna+2]== 'S'){
 
             if(posicao.controle[linha+1][coluna+3] == ' '
-              &&posicao.controle[linha+1][coluna+3] == ' '){
+              &&posicao.controle[linha+1][coluna+3] == ' '
+              &&posicao.controle[linha+2][coluna+3] !=' '){
                         flaginterna=TRUE;
 
             }
@@ -685,7 +688,8 @@ CONTROLE testa_esquerda(CONTROLE posicao, int *x, int *y,int *flag,char *restaur
     || posicao.controle[linha+2][coluna]== 'S'){
 
             if(posicao.controle[linha+1][coluna-1] == ' '
-              &&posicao.controle[linha+1][coluna-1] == ' '){
+              &&posicao.controle[linha+1][coluna-1] == ' '
+              &&posicao.controle[linha+2][coluna-1] != ' '){
                         flaginterna=TRUE;
 
             }
@@ -871,7 +875,7 @@ int move_mario(JOGO *parametros, char key){
                                 apaga((parametros->mario.coluna_inicial),(parametros->mario.linha_inicial));
                                 restaura_escada(PBAI,coord_x,coord_y,parametros->espelho_fixo);
                                 gotoxy(0,0);
-                                imprime_mario(coord_x,coord_y);
+                                posiciona_mario(coord_x,coord_y);
                                 parametros->mario.coluna_inicial=coord_x;
                                 parametros->mario.linha_inicial=coord_y;
                                 break;
@@ -1021,10 +1025,10 @@ void imprime_instrucoes(){
         printf("\nPressione qualquer tecla para retornar ao menu");
         getch();
     }
-    imprime_tela_incial();
+    imprime_tela_inicial();
 }
 
-void imprime_tela_incial(){
+void imprime_tela_inicial(){
     text_color(LIGHT_RED);
     system("cls");
     int c;
@@ -1323,7 +1327,7 @@ CONTROLE mapeia_fase(JOGO *mapadojogo,int qtd_objetos, int flag){
                       preenche_espelho(&mapa,x*3,y*2,'K');
                       mapa.save[y][x]='K';
                       mapadojogo->coluna_donk=x*3;
-                      mapadojogo->linha_donk=x*2;
+                      mapadojogo->linha_donk=y*2;
                 break; // sim era para ser D mas no bin ta K, ok né
             case 'G': y=(mapadojogo->vetor_objetos[i].linha_inicial);
                       x=(mapadojogo->vetor_objetos[i].coluna_inicial);
@@ -1362,7 +1366,6 @@ CONTROLE mapeia_fase(JOGO *mapadojogo,int qtd_objetos, int flag){
                         mapadojogo->barril_movel[indice_bM].linha_inicial=y*2;
                         mapadojogo->barril_movel[indice_bM].velocidade=mapadojogo->vetor_objetos[i].velocidade;
                         indice_bM++;
-                        mapa.save[y][x]='O';
                         mapadojogo->indice_barril=indice_bM;
                         }// barril que se mexe
                      else
@@ -1551,19 +1554,46 @@ JOGO carrega_jogo(JOGO carregado){
 }
 
 void prepara_barril(JOGO *jogo){
-    imprime_donk2(jogo->coluna_donk,jogo->linha_donk-4); // X e Y do donkey kong
-    imprime_barril_m(jogo->coluna_donk,jogo->linha_donk-6); // Acima do donkey kong
+    imprime_donk2(jogo->coluna_donk,jogo->linha_donk); // X e Y do donkey kong
+    imprime_barril_m(jogo->coluna_donk,jogo->linha_donk-2); // Acima do donkey kong
 }
 
 void joga_barril(JOGO *jogo){ // Ponteiro pois vamos mapear os barris moveis
-    apaga(jogo->coluna_donk,jogo->linha_donk-4);
-    apaga(jogo->coluna_donk,jogo->linha_donk-6);
-    imprime_donk1(jogo->coluna_donk,jogo->linha_donk-4);
-    imprime_barril_m(jogo->coluna_donk+3,jogo->linha_donk-4);
-    /*jogo->barril_movel[jogo->indice_barril]= ;
+    apaga(jogo->coluna_donk,jogo->linha_donk);
+    apaga(jogo->coluna_donk,jogo->linha_donk-2);
+    imprime_donk1(jogo->coluna_donk,jogo->linha_donk);
+    imprime_barril_m(jogo->coluna_donk+3,jogo->linha_donk);
+    jogo->barril_movel[jogo->indice_barril].coluna_inicial=jogo->coluna_donk+3;
+    jogo->barril_movel[jogo->indice_barril].linha_inicial=jogo->linha_donk;
+    jogo->barril_movel[jogo->indice_barril].velocidade=PDIR;
+    jogo->barril_movel[jogo->indice_barril].tipo='B';
+   // fazer um for
+   // jogo->espelho_fixo[jogo->barril_movel[jogo->indice_barril].coluna_inicial][jogo->barril_movel[jogo->indice_barril].linha_inicial]='B"
     jogo->indice_barril++;
-    */
 }
+
+void move_barril(JOGO *jogo){
+    int i;
+    for(i=0;i<jogo->indice_barril;i++){
+        switch((int)jogo->barril_movel[i].velocidade){
+            case PDIR: apaga(jogo->barril_movel[i].coluna_inicial,jogo->barril_movel[i].linha_inicial); // if(embaixo n tiver superfície velocidade = PBAI | if(superficie do lado) v=PESQ
+                       jogo->barril_movel[i].coluna_inicial++;
+                       imprime_barril_m(jogo->barril_movel[i].coluna_inicial,jogo->barril_movel[i].linha_inicial);
+                       break;
+            case PESQ: apaga(jogo->barril_movel[i].coluna_inicial,jogo->barril_movel[i].linha_inicial);
+                       jogo->barril_movel[i].coluna_inicial--;
+                       imprime_barril_m(jogo->barril_movel[i].coluna_inicial,jogo->barril_movel[i].linha_inicial);
+                       break;
+            case PBAI: apaga(jogo->barril_movel[i].coluna_inicial,jogo->barril_movel[i].linha_inicial);
+                       jogo->barril_movel[i].linha_inicial++;
+                       imprime_barril_m(jogo->barril_movel[i].coluna_inicial,jogo->barril_movel[i].linha_inicial);
+                       break;
+
+        }
+    }
+}
+
+// apaga(coluna,linha); imprime(coluna,linha)
 
 /* ############ CHANGELOG ############
     ############ Legenda: ###########
