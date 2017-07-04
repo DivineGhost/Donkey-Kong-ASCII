@@ -71,10 +71,10 @@ Referência das cores da função textcolor()
 #define X_PDR 3                 // Tamanho X padrão para impressão
 #define Y_PDR 2                 // Tamanho Y padrão para impressão
 #define MAX_OBJ 460             // Numero máximo de objetos possíveis
-#define MAX_BARRIL_M 0         // Número máximo de barris móveis simultaneamente na tela
+#define MAX_BARRIL_M 4        // Número máximo de barris móveis simultaneamente na tela
 #define X_MAX_ESPELHO 61
 #define Y_MAX_ESPELHO 48
-#define LINHAS_MAX 23  ////para save
+#define LINHAS_MAX 23  //para save
 #define COLUNAS_MAX 21 //para save
 #define Y_MAX 48       // Y max do prompt e x max do prompt
 #define X_MAX 60
@@ -107,11 +107,11 @@ Referência das cores da função textcolor()
 #define PAUSE 5
 #define JOGANDO 9
 // defines de moventos
-#define GRAVIDADE 5
+#define GRAVIDADE 25
 #define VEL_MARIO 10
-#define VEL_BARRIL 10
-#define VEL_GERA_BARRIL 100
-#define ATUALIZA_SCORE 500
+#define VEL_BARRIL 25
+#define VEL_GERA_BARRIL 200
+#define ATUALIZA_SCORE 150
 #define DEBUG
 #define PDIR 1
 #define PESQ 2
@@ -216,6 +216,7 @@ int testar_fim(CONTROLE , int , int  );
 int cai_barril(JOGO *,int);
 int deixa_descer_escada_b(CONTROLE , int , int ) ;
 int menu_pausa(JOGO);
+void apaga_barris(JOGO,int);
 //######################5-MAIN############################//
 
 int main()
@@ -382,6 +383,7 @@ JOGO novo_jogo(TIPO_FASE array_obj[],int limite)
     geral.score_atual=SCORE_INICIAL;
     geral.score_max=SCORE_INICIAL;
     geral.num_obj=limite;
+    geral.conta_barril=0;
     imprime_fase(array_obj,geral.num_obj,geral.vidas);
     geral.espelho_fixo=mapeia_fase(&geral,limite,NOVOJOGO);
     return geral;
@@ -446,7 +448,6 @@ void jogo(JOGO copia_controle)  //ok
     clock_t tempo_barril=clock();
     clock_t tempo_gravidade=clock();
     clock_t tempo_gera_barril=clock();
-    copia_controle.conta_barril=0; // inicializamos o contador dos barris
     int coord_x =copia_controle.mario.coluna_inicial;// auxiliar
     int coord_y =copia_controle.mario.linha_inicial; // auxiliar
     gotoxy(0,-1);
@@ -464,6 +465,7 @@ void jogo(JOGO copia_controle)  //ok
     char key='z';
     char reposicao='t';
     int barril_pronto=FALSE;
+    text_color(LIGHT_RED);
     printf("SCORE / SCORE MAX %d / %d", copia_controle.score_atual,copia_controle.score_max);
     int flag_pausa=0;
     while(condition != SAIR && condition != VITORIA && condition != DERROTA)
@@ -543,7 +545,6 @@ void jogo(JOGO copia_controle)  //ok
             }
             flag_barril=FALSE;
         }
-       // condition=testa_morte_queda(coord_y,condition,copia_controle);  // atualiza condicao de jogo de acordo com o movimento da gravidade
         switch(condition)
         {
 
@@ -557,21 +558,24 @@ void jogo(JOGO copia_controle)  //ok
             }
             else
             {
-                gotoxy(0,0);
-                // copia_controle_jogo.vidas=vidas;
                 (copia_controle.vidas)--;  // diminui uma vida
-                gotoxy(0,0);
-                apaga(coord_x,coord_y);
+                system("cls");
+                gotoxy(20, 20);
+                printf(" Você perdeu uma vida");
+                gotoxy(20, 22);
+                printf("  Vidas restantes: %d",copia_controle.vidas);
+                Sleep(1500); // Pausa o jogo por um determinado tempo
+                system("cls");
                 imprime_fase(copia_controle.vetor_objetos, copia_controle.num_obj,copia_controle.vidas);
                 copia_controle.mario.coluna_inicial= copia_controle.mario_x_origem;
                 copia_controle.mario.linha_inicial= copia_controle.mario_y_origem;
-
-                gotoxy(0,22);
                 condition= JOGANDO;
-               // flag_pausa=1;
                 copia_controle.score_atual=copia_controle.score_atual-200;
-                gotoxy(0,-1); // menos dois pois estamos sempre somando dois na função gotoxt para facilitar as impressões;
+                gotoxy(0,-1); // menos dois pois estamos sempre somando dois na função gotoxy para facilitar as impressões;
                 printf("SCORE / SCORE MAX %4d / %4d", copia_controle.score_atual,copia_controle.score_max);
+                apaga_barris(copia_controle,copia_controle.conta_barril); // Apaga todos os barris e zera o contador de barris
+                copia_controle.conta_barril=0;
+
             }
             break;
         case VITORIA:
@@ -580,23 +584,32 @@ void jogo(JOGO copia_controle)  //ok
         case PAUSE:
             condition=menu_pausa(copia_controle);
             system("cls");
-            imprime_fase(copia_controle.vetor_objetos, copia_controle.num_obj,copia_controle.vidas);
-            apaga(copia_controle.mario_x_origem,copia_controle.mario_y_origem); // para apagar a primeira posição do mario
-            posiciona_mario(copia_controle.mario.coluna_inicial,copia_controle.mario.linha_inicial);// somente reaproveitamento do struct para guar as posições de jogo
-           // flag_pausa=1;
-            gotoxy(0,-1); // menos dois pois estamos sempre somando dois na função gotoxt para facilitar as impressões;
-            printf("SCORE / SCORE MAX %4d / %4d", copia_controle.score_atual,copia_controle.score_max);
+            if(condition!=SAIR)
+            {
+                imprime_fase(copia_controle.vetor_objetos, copia_controle.num_obj,copia_controle.vidas);
+                apaga(copia_controle.mario_x_origem,copia_controle.mario_y_origem); // para apagar a primeira posição do mario
+                posiciona_mario(copia_controle.mario.coluna_inicial,copia_controle.mario.linha_inicial);// somente reaproveitamento do struct para guar as posições de jogo
+                gotoxy(0,-1); // menos dois pois estamos sempre somando dois na função gotoxt para facilitar as impressões;
+                text_color(LIGHT_RED);
+                printf("SCORE / SCORE MAX %4d / %4d", copia_controle.score_atual,copia_controle.score_max);
+            }
             break;
         }
 
     }
 }
 
+void apaga_barris(JOGO copia,int num_barril){
+    int i;
+    for(i=0;i<num_barril-1;i++)
+    {
+        apaga(copia.barril_movel[i].coluna_inicial,copia.barril_movel[i].linha_inicial);
+        apaga_espelho(copia.espelho_fixo,copia.barril_movel[i].coluna_inicial,copia.barril_movel[i].linha_inicial);
+    }
+}
+
 int testa_morte_queda(int y,int condition, JOGO teste)
 {
-    gotoxy(0,6);
-    printf("%c",teste.espelho_fixo.controle[teste.mario.linha_inicial+Y_PDR][teste.mario.coluna_inicial]);
-    // system("pause");
     if (y==44
             || teste.espelho_fixo.controle[teste.mario.linha_inicial+Y_PDR][teste.mario.coluna_inicial]== 'K'  //bateu no kong
             || teste.espelho_fixo.controle[teste.mario.linha_inicial+Y_PDR][teste.mario.coluna_inicial+1]== 'K'
@@ -864,8 +877,6 @@ void testa_queda(CONTROLE posicao, int *x, int *y,int *flag,char *restaura)
 
     else *flag=0;
 }
-
-//CONTROLE  pode_pulo((CONTROLE posicao, int *x, int *y,int *flag,char *restaura))
 
 CONTROLE restaura_escada(int sentido,int x,int y,CONTROLE a)
 {
@@ -1254,8 +1265,7 @@ void imprime_instrucoes()
     text_color(LIGHT_GREEN);
     int c;
     FILE *info;
-    info = fopen("menuinfo.txt", "r"); // agora se quiser trocar o menu é só trocar aqui dai o código fica menos poluído.
-    // além disso agr é so tu escrever num txt normal sem ter que por aspas ou \n ou \\ para imprimir barras :)
+    info = fopen("menuinfo.txt", "r");
     if (info)
     {
         while ((c = getc(info)) != EOF)
@@ -1479,7 +1489,7 @@ void cor_escadas(int a)
     }
 }
 
-void imprime_fase(TIPO_FASE vetor_objetos[], int  qtd_objetos,int vidas)
+void imprime_fase(TIPO_FASE vetor_objetos[],int qtd_objetos,int vidas)
 {
     int i;
     int x,y;
@@ -1534,7 +1544,7 @@ void imprime_fase(TIPO_FASE vetor_objetos[], int  qtd_objetos,int vidas)
             imprime_escFIM( x,y);
             break;
         case 'B':
-            if( vetor_objetos[i].velocidade>0)
+            if(vetor_objetos[i].velocidade>0)
             {
                 x=(vetor_objetos[i].coluna_inicial)*3;
                 y=(vetor_objetos[i].linha_inicial)*2;
@@ -1547,14 +1557,12 @@ void imprime_fase(TIPO_FASE vetor_objetos[], int  qtd_objetos,int vidas)
                 imprime_barril_e(x,y);
             }
             break;
-        }//
+        }
 
     }
 
-    gotoxy(0,-2); // menos dois pois estamos sempre somando dois na função gotoxt para facilitar as impressões;
+    gotoxy(0,-2); // menos dois pois estamos sempre somando dois na função gotoxy para facilitar as impressões;
     printf("VIDAS %d \n", vidas);
-
-    //    printf("SCORE ATUAL/MAX: %d / %d",paraimpressao->score_atual, paraimpressao->score_max);
 }
 
 void preenche_espelho(CONTROLE *mapa,int x,int y, char obj)
@@ -1610,7 +1618,6 @@ CONTROLE mapeia_fase(JOGO *mapadojogo,int qtd_objetos, int flag)
             if (jn== (COLUNAS_MAX-1))mapa.save[in][jn]='\n';
         }
     }
-    //printf("%c", mapa.controle[14][23]); // ate aqui tudo certo
     mapadojogo->num_obj=qtd_objetos;
     for (i=0; i<qtd_objetos; i++)
     {
@@ -1682,15 +1689,15 @@ CONTROLE mapeia_fase(JOGO *mapadojogo,int qtd_objetos, int flag)
         case 'B':
             if(mapadojogo->vetor_objetos[i].velocidade!=0)
             {  // barris moveis
-                y=(mapadojogo->vetor_objetos[i].linha_inicial);
+            /*    y=(mapadojogo->vetor_objetos[i].linha_inicial);
                 x=(mapadojogo->vetor_objetos[i].coluna_inicial);
                 mapadojogo->barril_movel[indice_bM].coluna_inicial=x*3;
                 mapadojogo->barril_movel[indice_bM].linha_inicial=y*2;
                 mapadojogo->barril_movel[indice_bM].velocidade=mapadojogo->vetor_objetos[i].velocidade;
                 indice_bM++;
                 mapa.save[y][x]='O';
-               // mapadojogo->conta_barril=indice_bM;
-            }// barril que se mexe
+            /*    Assim que eu comentei isso, funcionou, sei lá*/
+            }
             else
                 {
                 y=(mapadojogo->vetor_objetos[i].linha_inicial);
@@ -1723,7 +1730,7 @@ void ler_menu_pausa()
     else
     {
         system("cls");
-        printf("Erro ao apresentar as intruções, verifique a existencia do arquivo pausa.txt");
+        printf("Erro ao apresentar as instruções, verifique a existencia do arquivo pausa.txt");
         printf("\nPressione qualquer tecla para retornar ao jogo");
         getch();
     }
@@ -1734,7 +1741,6 @@ int menu_pausa(JOGO copia_controle)
     system("cls");
     int x =19, y[] = {19, 21, 23};
     int contador = 0, sair = FALSE; // Coordenadas da seta, contador índice da seta, booleano sair para sair do menu
-    // text_color(RED); // Cor vermelha
     ler_menu_pausa();
     int key;
     int retorno;
@@ -1783,17 +1789,13 @@ int menu_pausa(JOGO copia_controle)
             }
             else
             {
-                salva_jogo(copia_controle);
-                //controle_jogo(copia_controle, copia_controle.vetor_objetos);
+                system("cls");
                 sair=TRUE;
                 retorno= SAIR;
             }
             break;
 
         }
-
-
-
     }
     while(!sair);  // Enquanto "não sair"
     return retorno;
@@ -1819,7 +1821,10 @@ void salva_jogo(JOGO mapa) // adicionar barris moveis aqui
             fputc(mapa.espelho_fixo.save[i][j],jogosalvo);
         }
     }
-    fprintf(jogosalvo,"%d#%d#%d#%d",mapa.mario.coluna_inicial,mapa.mario.linha_inicial,mapa.score_atual,mapa.vidas); // (COLUNA,LINHA),score_atual,vidas => (linha, coluna)
+    fprintf(jogosalvo,"%d#%d#%d#%d#%d",mapa.mario.coluna_inicial,mapa.mario.linha_inicial,mapa.score_atual,mapa.vidas,mapa.conta_barril);
+    for(i=0;i<mapa.conta_barril;i++)
+        fprintf(jogosalvo,"#%d#%d#%.0f",mapa.barril_movel[i].coluna_inicial,mapa.barril_movel[i].linha_inicial,mapa.barril_movel[i].velocidade);
+    // {MARIO}(COLUNA,LINHA),score_atual,vidas,quantos barris,{BARRIS} COLUNA,LINHA,VELOCIDADE => (linha, coluna)
     fclose(jogosalvo);
     gotoxy(21, 35);
     printf("Jogo salvo!");
@@ -1840,7 +1845,7 @@ JOGO carrega_mapa()
     gets(nome_load);
     strcat(nome_load, ".txt");
     load=fopen(nome_load, "r");
-    char stringao[30];
+    char stringao[50];
     if(!load)
     {
         gotoxy(3, 27);
@@ -1856,10 +1861,9 @@ JOGO carrega_mapa()
             }
 
         }
-        // o numero xe bites deslocados é igual a matriz pequena mais \n , ver o tamnanho de um arqiivo para confirmar, menos  linha FINAL
+        // o numero de bites deslocados é igual a matriz pequena mais \n , ver o tamnanho de um arqiivo para confirmar, menos  linha FINAL
         fseek(load,0,SEEK_CUR);
-        fgets(stringao,30,load);
-        printf("%s",stringao);
+        fgets(stringao,50,load);
         // salvo como COLUNA#LINHA#score_atual#vidas
         ptr=strtok(stringao,"#");
         loadgame.mario.coluna_inicial=atoi(ptr);
@@ -1869,6 +1873,17 @@ JOGO carrega_mapa()
         loadgame.score_atual=atoi(ptr);
         ptr=strtok(NULL,"#");
         loadgame.vidas=atoi(ptr);
+        ptr=strtok(NULL,"#");
+        loadgame.conta_barril=atoi(ptr);
+        for(i=0;i<loadgame.conta_barril;i++)
+        {
+            ptr=strtok(NULL,"#");
+            loadgame.barril_movel[i].coluna_inicial=atoi(ptr);
+            ptr=strtok(NULL,"#");
+            loadgame.barril_movel[i].linha_inicial=atoi(ptr);
+            ptr=strtok(NULL,"#");
+            loadgame.barril_movel[i].velocidade=atof(ptr);
+        }
     }
     loadgame.score_max=SCORE_INICIAL;
     gera_tipo_fase(loadgame.espelho_fixo,&numobjetos,&loadgame);
@@ -1897,14 +1912,17 @@ void gera_tipo_fase(CONTROLE para_analise,int *qtdobjetos,JOGO *loadgame)
         }
     }
     *qtdobjetos=contador;
-
 }
 
 JOGO carrega_jogo(JOGO carregado)
 {
-    CONTROLE antigo=carregado.espelho_fixo;
+    CONTROLE antigo=carregado.espelho_fixo; // Auxiliar para impressão do mapa
     system("cls");
     imprime_fase(carregado.vetor_objetos,carregado.num_obj,carregado.vidas);
+    int i;
+    if(carregado.conta_barril>0) // Se tiver barris moveis
+        for(i=0;i<carregado.conta_barril;i++)
+            imprime_barril_m(carregado.barril_movel[i].coluna_inicial,carregado.barril_movel[i].linha_inicial);
     antigo=mapeia_fase(&carregado,carregado.num_obj,CONTINUARJOGO);
     carregado.espelho_fixo=antigo;
     apaga(carregado.mario_x_origem,carregado.mario_y_origem);
@@ -2050,8 +2068,6 @@ int move_barril(JOGO *jogo,int indice_barril)// move para os lados
         }
     }
 
-
-
 #ifdef DEBUG
     aa=fopen("antesff.txt","w");
     for (in=0; in<Y_MAX_ESPELHO; in++)
@@ -2090,10 +2106,6 @@ int cai_barril(JOGO *jogo,int indice_barril){
                 jogo->espelho_fixo=restaura_escada(PBAI,coord_x,coord_y,jogo->espelho_fixo); //restaurando as escadas
                 jogo->espelho_fixo=escreve_espelho(jogo->espelho_fixo,coord_x,coord_y,'B'); // colocando o barril de volta no mapa de analise e na tela de jogo
                 imprime_barril_m(coord_x,coord_y);
-//                if ((coord_x-1)==jogo->mario.coluna_inicial && coord_y==jogo->mario.linha_inicial) // acertaria   o mario num choque horizontal 100%
-//                     return DERROTA;
-//                else if ((coord_x-1)==jogo->mario.coluna_inicial && (coord_y+1)==jogo->mario.linha_inicial) // acertaria mario num choque horizontal 50%
-//                     return DERROTA;
             }
         }
         else  {// encontrei alguma outra coisa, mudo de direção
@@ -2127,12 +2139,6 @@ int cai_barril(JOGO *jogo,int indice_barril){
                     }
                 }
             }
-
-        // if ((coord_x-1)==jogo->mario.coluna_inicial && coord_y==jogo->mario.linha_inicial) // acertaria   o mario num choque horizontal 100%
-//                     return DERROTA;
-//                else if ((coord_x-1)==jogo->mario.coluna_inicial && (coord_y+1)==jogo->mario.linha_inicial) // acertaria mario num choque horizontal 50%
-//                     return DERROTA;
-
 }
 
 int deixa_descer_escada_b(CONTROLE posicao, int x, int y)   //ok// mudar la encima
@@ -2142,7 +2148,7 @@ int deixa_descer_escada_b(CONTROLE posicao, int x, int y)   //ok// mudar la enci
     linha=y;
 
     int seed=time(NULL);
-    int max=2;
+    int max=5;
     int min=0;
     srand(seed);
     int descer;//rand() % (max + 1 - min) + min;
@@ -2152,7 +2158,7 @@ int deixa_descer_escada_b(CONTROLE posicao, int x, int y)   //ok// mudar la enci
             && posicao.controle[linha+2][coluna+2] == 'H')
     {
             descer=rand() % (max + 1 - min) + min;
-            if (descer==1)deixadescer=TRUE;
+            if (descer!=0 || descer!=1 || descer!=2 || descer!=3)deixadescer=TRUE;
     }
     return deixadescer;
 }
@@ -2181,8 +2187,6 @@ CONTROLE testa_direita_barril(CONTROLE posicao, int *x, int *y, int *flag,char *
     linha=*y;
     int bPodeMover=FALSE;
     gotoxy(12,12);
-  //  printf("AQUI ***%c***",posicao.controle[linha][coluna+X_PDR+1]);
-    //system("pause");
     if (posicao.controle[linha+2][coluna] == 'H'
             || posicao.controle[linha+2][coluna] == 'S'
             || posicao.controle[linha+2][coluna] == ' '
@@ -2233,8 +2237,6 @@ CONTROLE testa_esquerda_barril(CONTROLE posicao, int *x, int *y,int *flag,char *
     linha=*y;
     int bPodeMover=FALSE;
     gotoxy(12,12);
-    printf("AQUI ***%c***",posicao.controle[linha][coluna+X_PDR+1]);
-    //system("pause");
     if (posicao.controle[linha+2][coluna] == 'H'
             || posicao.controle[linha+2][coluna] == 'S'
             || posicao.controle[linha+2][coluna] == ' '
@@ -2346,4 +2348,9 @@ Vitor, 30/06
         ####=> Criação da função habilita_movimento {int habilita_movimento(int flag_teste, clock_t *relogio1, clock_t relogio2,char atividade)}, adaptando
         aquilo que tu tinha feito para o tempo etc.
         -> Em decorrencia disso já crie os #defines do jogo, e como é alterado o score com o passar do tempo e etc, essas alterações estão na função jogo;
+
+Pedro, 04/07
+        - Agora salva e carrega os barris usando strtok
+        - Quando o Mário morre, a tela fica preta e dá um Sleep pro usuário se "preparar"
+        ####=> Pretendo fazer com que os barris sumam depois que morre, mas ta bugando, se pa tem que apagar ele no espelho
 */
