@@ -216,7 +216,7 @@ int testar_fim(CONTROLE , int , int  );
 int cai_barril(JOGO *,int);
 int deixa_descer_escada_b(CONTROLE , int , int ) ;
 int menu_pausa(JOGO);
-void apaga_barris(JOGO,int);
+void apaga_barris(JOGO*,int);
 //######################5-MAIN############################//
 
 int main()
@@ -573,7 +573,7 @@ void jogo(JOGO copia_controle)  //ok
                 copia_controle.score_atual=copia_controle.score_atual-200;
                 gotoxy(0,-1); // menos dois pois estamos sempre somando dois na função gotoxy para facilitar as impressões;
                 printf("SCORE / SCORE MAX %4d / %4d", copia_controle.score_atual,copia_controle.score_max);
-                apaga_barris(copia_controle,copia_controle.conta_barril); // Apaga todos os barris e zera o contador de barris
+                apaga_barris(&copia_controle,copia_controle.conta_barril); // Apaga todos os barris e zera o contador de barris
                 copia_controle.conta_barril=0;
 
             }
@@ -599,12 +599,12 @@ void jogo(JOGO copia_controle)  //ok
     }
 }
 
-void apaga_barris(JOGO copia,int num_barril){
+void apaga_barris(JOGO *copia,int num_barril){
     int i;
     for(i=0;i<num_barril-1;i++)
     {
-        apaga(copia.barril_movel[i].coluna_inicial,copia.barril_movel[i].linha_inicial);
-        apaga_espelho(copia.espelho_fixo,copia.barril_movel[i].coluna_inicial,copia.barril_movel[i].linha_inicial);
+        apaga(copia->barril_movel[i].coluna_inicial,copia->barril_movel[i].linha_inicial);
+        apaga_espelho(copia->espelho_fixo,copia->barril_movel[i].coluna_inicial,copia->barril_movel[i].linha_inicial);
     }
 }
 
@@ -1837,54 +1837,59 @@ JOGO carrega_mapa()
     int i,j;  //para o for
     JOGO loadgame;// meu retorno
     char *ptr; // strtok
-    int numobjetos;
-    gotoxy(15,23);
-    printf("Nome do arquivo (sem extensão): ");
-    gotoxy(15, 25);
-    fflush(stdin);
-    gets(nome_load);
-    strcat(nome_load, ".txt");
-    load=fopen(nome_load, "r");
     char stringao[50];
-    if(!load)
-    {
-        gotoxy(3, 27);
-        printf("Erro na leitura, o arquivo não existe na pasta do jogo");
-    }
-    else
-    {
-        for(i=0; i<LINHAS_MAX; i++)
-        {
-            for(j=0; j<COLUNAS_MAX; j++)
-            {
-                loadgame.espelho_fixo.save[i][j]=getc(load);
-            }
+    char key;
+    int numobjetos;
+    do{
+        gotoxy(15,23);
+        printf("Nome do arquivo (sem extensão): ");
+        gotoxy(15, 25);
+        fflush(stdin);
+        gets(nome_load);
+        strcat(nome_load, ".txt");
+        load=fopen(nome_load, "r");
 
-        }
-        // o numero de bites deslocados é igual a matriz pequena mais \n , ver o tamnanho de um arqiivo para confirmar, menos  linha FINAL
-        fseek(load,0,SEEK_CUR);
-        fgets(stringao,50,load);
-        // salvo como COLUNA#LINHA#score_atual#vidas
-        ptr=strtok(stringao,"#");
-        loadgame.mario.coluna_inicial=atoi(ptr);
-        ptr=strtok(NULL,"#");
-        loadgame.mario.linha_inicial=atoi(ptr);
-        ptr=strtok(NULL,"#");
-        loadgame.score_atual=atoi(ptr);
-        ptr=strtok(NULL,"#");
-        loadgame.vidas=atoi(ptr);
-        ptr=strtok(NULL,"#");
-        loadgame.conta_barril=atoi(ptr);
-        for(i=0;i<loadgame.conta_barril;i++)
+        if(!load)
         {
-            ptr=strtok(NULL,"#");
-            loadgame.barril_movel[i].coluna_inicial=atoi(ptr);
-            ptr=strtok(NULL,"#");
-            loadgame.barril_movel[i].linha_inicial=atoi(ptr);
-            ptr=strtok(NULL,"#");
-            loadgame.barril_movel[i].velocidade=atof(ptr);
+            system("cls");
+            gotoxy(3, 27);
+            printf("Erro na leitura, o arquivo não existe na pasta do jogo");
+            gotoxy(18, 30);
+            printf("Insira o nome do arquivo: ");
+        }
+    }while(!load);
+
+   for(i=0; i<LINHAS_MAX; i++)
+   {
+        for(j=0; j<COLUNAS_MAX; j++)
+        {
+            loadgame.espelho_fixo.save[i][j]=getc(load);
         }
     }
+    // o numero de bites deslocados é igual a matriz pequena mais \n , ver o tamnanho de um arqiivo para confirmar, menos  linha FINAL
+    fseek(load,0,SEEK_CUR);
+    fgets(stringao,50,load);
+    // salvo como COLUNA#LINHA#score_atual#vidas
+    ptr=strtok(stringao,"#");
+    loadgame.mario.coluna_inicial=atoi(ptr);
+    ptr=strtok(NULL,"#");
+    loadgame.mario.linha_inicial=atoi(ptr);
+    ptr=strtok(NULL,"#");
+    loadgame.score_atual=atoi(ptr);
+    ptr=strtok(NULL,"#");
+    loadgame.vidas=atoi(ptr);
+    ptr=strtok(NULL,"#");
+    loadgame.conta_barril=atoi(ptr);
+    for(i=0;i<loadgame.conta_barril;i++)
+    {
+        ptr=strtok(NULL,"#");
+        loadgame.barril_movel[i].coluna_inicial=atoi(ptr);
+        ptr=strtok(NULL,"#");
+        loadgame.barril_movel[i].linha_inicial=atoi(ptr);
+        ptr=strtok(NULL,"#");
+        loadgame.barril_movel[i].velocidade=atof(ptr);
+    }
+
     loadgame.score_max=SCORE_INICIAL;
     gera_tipo_fase(loadgame.espelho_fixo,&numobjetos,&loadgame);
     loadgame.num_obj=numobjetos;
